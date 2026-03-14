@@ -26,8 +26,8 @@ define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 add_action( 'plugins_loaded', 'apmcp_maybe_load_bundled_mcp_adapter', 5 );
 
 function apmcp_maybe_load_bundled_mcp_adapter() {
-	// If the standalone MCP Adapter plugin already defined its constant, skip.
-	if ( defined( 'WP_MCP_DIR' ) ) {
+	// If MCP Adapter is already available (standalone plugin), skip the bundled copy.
+	if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
 		return;
 	}
 
