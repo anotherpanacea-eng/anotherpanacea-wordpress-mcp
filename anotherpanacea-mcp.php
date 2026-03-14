@@ -80,3 +80,43 @@ function apmcp_register_abilities() {
 	APMCP_Upload_Media::register();
 	APMCP_Delete_Post::register();
 }
+
+/**
+ * Register a compatibility route at /wp/v2/wpmcp so that the
+ * @automattic/mcp-wordpress-remote client (which expects this path)
+ * can reach the MCP Adapter (which registers at /mcp/mcp-adapter-default-server).
+ */
+add_action( 'rest_api_init', 'apmcp_register_compat_route' );
+
+function apmcp_register_compat_route() {
+	register_rest_route(
+		'wp/v2',
+		'/wpmcp',
+		array(
+			'methods'             => array( 'POST', 'GET', 'DELETE' ),
+			'callback'            => 'apmcp_proxy_to_mcp_adapter',
+			'permission_callback' => '__return_true', // Auth handled by MCP Adapter.
+		)
+	);
+}
+
+/**
+ * Forward the request to the real MCP Adapter endpoint.
+ *
+ * @param WP_REST_Request $request The incoming request.
+ * @return WP_REST_Response|WP_Error
+ */
+function apmcp_proxy_to_mcp_adapter( $request ) {
+	$internal = new WP_REST_Request( $request->get_method(), '/mcp/mcp-adapter-default-server' );
+	$internal->set_headers( $request->get_headers() );
+	$internal->set_body( $request->get_body() );
+
+	if ( $request->get_content_type() ) {
+		$internal->set_content_type( $request->get_content_type()['value'] );
+	}
+
+	// Copy query params for GET requests.
+	$internal->set_query_params( $request->get_query_params() );
+
+	return rest_do_request( $internal );
+}
