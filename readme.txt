@@ -2,7 +2,7 @@
 Contributors: anotherpanacea
 Tags: mcp, ai, content-management, abilities-api
 Requires at least: 6.8
-Tested up to: 6.8
+Tested up to: 6.9
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPL-2.0-or-later
@@ -13,7 +13,12 @@ Registers MCP abilities for full post lifecycle management via the WordPress Abi
 
 AnotherPanacea MCP is an abilities provider plugin that gives Claude (via Claude Code or Claude Desktop) full post lifecycle control over a self-hosted WordPress site.
 
-Bundles [MCP Adapter](https://github.com/WordPress/mcp-adapter) v0.4.1. If MCP Adapter is already installed as a standalone plugin, the bundled copy is skipped. No separate installation required.
+Bundles both required dependencies:
+
+* [Abilities API](https://github.com/WordPress/abilities-api) v0.4.0 — provides `wp_register_ability()` and the Abilities framework
+* [MCP Adapter](https://github.com/WordPress/mcp-adapter) v0.4.1 — translates MCP protocol to WordPress abilities
+
+If either dependency is already installed as a standalone plugin, the bundled copy is automatically skipped. No separate installation required.
 
 = Registered Abilities =
 
@@ -48,4 +53,4 @@ The plugin automatically converts between Markdown (what Claude works with) and 
 = 1.0.0 =
 * Initial release with all Phase 1 and Phase 2 abilities.
 * Bidirectional Markdown ↔ Gutenberg block markup converter.
-* Bundles MCP Adapter v0.4.1.
+* Bundles Abilities API v0.4.0 and MCP Adapter v0.4.1.

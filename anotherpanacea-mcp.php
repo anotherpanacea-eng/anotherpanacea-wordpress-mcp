@@ -15,26 +15,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 define( 'APMCP_VERSION', '1.0.0' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
+define( 'APMCP_BUNDLED_ABILITIES_API_VERSION', '0.4.0' );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
 /**
- * Load the bundled MCP Adapter if it is not already active as a standalone plugin.
+ * Load the bundled Abilities API and MCP Adapter if not already active.
  *
- * Checks on 'plugins_loaded' (priority 5, before default 10) so the adapter
- * initializes before anything hooks into wp_abilities_api_init.
+ * Loads on 'plugins_loaded' (priority 5, before default 10) so both
+ * dependencies initialize before anything hooks into wp_abilities_api_init.
+ *
+ * Load order matters: Abilities API must be available before MCP Adapter,
+ * because MCP Adapter checks function_exists('wp_register_ability').
  */
-add_action( 'plugins_loaded', 'apmcp_maybe_load_bundled_mcp_adapter', 5 );
+add_action( 'plugins_loaded', 'apmcp_maybe_load_bundled_dependencies', 5 );
 
-function apmcp_maybe_load_bundled_mcp_adapter() {
-	// If MCP Adapter is already available (standalone plugin), skip the bundled copy.
-	if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
-		return;
+function apmcp_maybe_load_bundled_dependencies() {
+	// 1. Load Abilities API if wp_register_ability() is not already available.
+	if ( ! function_exists( 'wp_register_ability' ) ) {
+		$abilities_path = APMCP_DIR . 'bundled/abilities-api/abilities-api.php';
+		if ( file_exists( $abilities_path ) ) {
+			require_once $abilities_path;
+		}
 	}
 
-	$bundled_path = APMCP_DIR . 'bundled/mcp-adapter/mcp-adapter.php';
-
-	if ( file_exists( $bundled_path ) ) {
-		require_once $bundled_path;
+	// 2. Load MCP Adapter if not already available (standalone plugin).
+	if ( ! class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
+		$adapter_path = APMCP_DIR . 'bundled/mcp-adapter/mcp-adapter.php';
+		if ( file_exists( $adapter_path ) ) {
+			require_once $adapter_path;
+		}
 	}
 }
 
