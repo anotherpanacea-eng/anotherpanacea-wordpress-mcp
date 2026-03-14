@@ -40,7 +40,7 @@ The plugin automatically converts between Markdown (what Claude works with) and 
 
 1. Upload the `anotherpanacea-mcp` directory to `wp-content/plugins/`.
 2. Activate the plugin. (MCP Adapter is bundled — no separate install needed.)
-3. Verify abilities appear in Settings > MCP Settings.
+3. Verify abilities are registered by visiting `https://your-site.com/wp-json/wp/v2/abilities` (requires authentication).
 4. If you already have MCP Adapter installed standalone, the bundled copy is automatically skipped.
 
 == Changelog ==
