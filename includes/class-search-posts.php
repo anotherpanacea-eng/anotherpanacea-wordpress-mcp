@@ -120,6 +120,18 @@ class APMCP_Search_Posts {
 			'order'          => 'title' === $input['orderby'] ? 'ASC' : 'DESC',
 		);
 
+		// Scope the query at the database level so pagination is accurate.
+		// Users who can edit_others_posts (Editors+) see all posts.
+		// Users who can't (Authors/Contributors) only see their own
+		// non-published posts, matching WP core REST API behavior.
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			$requested = is_array( $statuses ) ? $statuses : array( $statuses );
+			$needs_author_scope = array_diff( $requested, array( 'publish' ) );
+			if ( ! empty( $needs_author_scope ) ) {
+				$args['author'] = get_current_user_id();
+			}
+		}
+
 		if ( ! empty( $input['search'] ) ) {
 			$args['s'] = $input['search'];
 		}
@@ -148,11 +160,6 @@ class APMCP_Search_Posts {
 		$posts = array();
 
 		foreach ( $query->posts as $post ) {
-			// Per-post capability check: skip posts the user cannot read.
-			if ( ! current_user_can( 'read_post', $post->ID ) ) {
-				continue;
-			}
-
 			$categories = wp_get_post_categories( $post->ID, array( 'fields' => 'slugs' ) );
 			$tags       = wp_get_post_tags( $post->ID, array( 'fields' => 'slugs' ) );
 
@@ -169,20 +176,10 @@ class APMCP_Search_Posts {
 			);
 		}
 
-		$filtered_total = (int) $query->found_posts;
-		$per_page       = min( (int) $input['per_page'], 100 );
-
-		// If we filtered out posts the user can't read, adjust totals
-		// to reflect what they actually see.
-		$page_diff = count( $query->posts ) - count( $posts );
-		if ( $page_diff > 0 ) {
-			$filtered_total = max( 0, $filtered_total - $page_diff );
-		}
-
 		return array(
 			'posts'       => $posts,
-			'total'       => $filtered_total,
-			'total_pages' => $per_page > 0 ? (int) ceil( $filtered_total / $per_page ) : 1,
+			'total'       => (int) $query->found_posts,
+			'total_pages' => (int) $query->max_num_pages,
 			'page'        => (int) $input['page'],
 		);
 	}
