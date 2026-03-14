@@ -110,12 +110,6 @@ function apmcp_proxy_to_mcp_adapter( $request ) {
 	$internal = new WP_REST_Request( $request->get_method(), '/mcp/mcp-adapter-default-server' );
 	$internal->set_headers( $request->get_headers() );
 	$internal->set_body( $request->get_body() );
-
-	if ( $request->get_content_type() ) {
-		$internal->set_content_type( $request->get_content_type()['value'] );
-	}
-
-	// Copy query params for GET requests.
 	$internal->set_query_params( $request->get_query_params() );
 
 	return rest_do_request( $internal );
