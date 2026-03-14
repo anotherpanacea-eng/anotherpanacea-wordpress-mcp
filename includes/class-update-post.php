@@ -158,12 +158,13 @@ class APMCP_Update_Post {
 			$term = get_term_by( 'slug', $slug, 'category' );
 			if ( $term ) {
 				$ids[] = $term->term_id;
-			} else {
+			} elseif ( current_user_can( 'manage_categories' ) ) {
 				$result = wp_insert_term( ucwords( str_replace( '-', ' ', $slug ) ), 'category', array( 'slug' => $slug ) );
 				if ( ! is_wp_error( $result ) ) {
 					$ids[] = $result['term_id'];
 				}
 			}
+			// If category doesn't exist and user can't create, silently skip.
 		}
 		return $ids;
 	}

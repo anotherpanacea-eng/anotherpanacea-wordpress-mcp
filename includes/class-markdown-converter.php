@@ -160,6 +160,17 @@ class APMCP_Markdown_Converter {
 			return '';
 		}
 
+		// Strip raw HTML tags that aren't part of Markdown syntax.
+		// Allow only the inline elements that inline_markdown_to_html produces,
+		// preventing callers from smuggling arbitrary HTML/block markup through
+		// the "markdown" format.
+		$markdown = wp_kses( $markdown, array(
+			'strong' => array(),
+			'em'     => array(),
+			'code'   => array(),
+			'a'      => array( 'href' => array() ),
+		) );
+
 		$lines  = explode( "\n", $markdown );
 		$blocks = array();
 		$i      = 0;

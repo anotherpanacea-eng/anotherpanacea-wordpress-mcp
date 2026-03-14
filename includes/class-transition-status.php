@@ -49,9 +49,10 @@ class APMCP_Transition_Status {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to change post status.', array( 'status' => 403 ) );
 		}
-		// Publishing requires publish_posts capability.
-		if ( ! empty( $input['status'] ) && 'publish' === $input['status'] && ! current_user_can( 'publish_posts' ) ) {
-			return new WP_Error( 'forbidden', 'You do not have permission to publish posts.', array( 'status' => 403 ) );
+		// Publishing and private both require publish_posts capability.
+		$status = $input['status'] ?? '';
+		if ( in_array( $status, array( 'publish', 'private' ), true ) && ! current_user_can( 'publish_posts' ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to publish or make posts private.', array( 'status' => 403 ) );
 		}
 		return true;
 	}

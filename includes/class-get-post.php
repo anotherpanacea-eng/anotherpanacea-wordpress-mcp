@@ -68,6 +68,11 @@ class APMCP_Get_Post {
 			return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
 		}
 
+		// Per-post capability check.
+		if ( ! current_user_can( 'read_post', $post->ID ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to read this post.', array( 'status' => 403 ) );
+		}
+
 		$categories = wp_get_post_categories( $post->ID, array( 'fields' => 'slugs' ) );
 		$tags       = wp_get_post_tags( $post->ID, array( 'fields' => 'slugs' ) );
 

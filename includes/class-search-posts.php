@@ -75,6 +75,16 @@ class APMCP_Search_Posts {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to search posts.', array( 'status' => 403 ) );
 		}
+		// Private posts require read_private_posts capability.
+		$status = $input['status'] ?? 'draft';
+		if ( 'private' === $status || 'any' === $status ) {
+			if ( ! current_user_can( 'read_private_posts' ) ) {
+				if ( 'private' === $status ) {
+					return new WP_Error( 'forbidden', 'You do not have permission to view private posts.', array( 'status' => 403 ) );
+				}
+				// For 'any', we'll filter out private posts in execute() instead of blocking entirely.
+			}
+		}
 		return true;
 	}
 
@@ -91,9 +101,19 @@ class APMCP_Search_Posts {
 			'orderby'  => 'modified',
 		) );
 
+		// Build the status array, respecting capabilities.
+		if ( 'any' === $input['status'] ) {
+			$statuses = array( 'draft', 'publish', 'pending' );
+			if ( current_user_can( 'read_private_posts' ) ) {
+				$statuses[] = 'private';
+			}
+		} else {
+			$statuses = $input['status'];
+		}
+
 		$args = array(
 			'post_type'      => 'post',
-			'post_status'    => 'any' === $input['status'] ? array( 'draft', 'publish', 'pending', 'private' ) : $input['status'],
+			'post_status'    => $statuses,
 			'posts_per_page' => min( (int) $input['per_page'], 100 ),
 			'paged'          => max( (int) $input['page'], 1 ),
 			'orderby'        => $input['orderby'],
@@ -128,6 +148,11 @@ class APMCP_Search_Posts {
 		$posts = array();
 
 		foreach ( $query->posts as $post ) {
+			// Per-post capability check: skip posts the user cannot read.
+			if ( ! current_user_can( 'read_post', $post->ID ) ) {
+				continue;
+			}
+
 			$categories = wp_get_post_categories( $post->ID, array( 'fields' => 'slugs' ) );
 			$tags       = wp_get_post_tags( $post->ID, array( 'fields' => 'slugs' ) );
 
@@ -146,7 +171,7 @@ class APMCP_Search_Posts {
 
 		return array(
 			'posts'       => $posts,
-			'total'       => (int) $query->found_posts,
+			'total'       => count( $posts ),
 			'total_pages' => (int) $query->max_num_pages,
 			'page'        => (int) $input['page'],
 		);

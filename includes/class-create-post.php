@@ -79,6 +79,13 @@ class APMCP_Create_Post {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to create posts.', array( 'status' => 403 ) );
 		}
+		$status = $input['status'] ?? 'draft';
+		if ( 'publish' === $status && ! current_user_can( 'publish_posts' ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to publish posts.', array( 'status' => 403 ) );
+		}
+		if ( 'private' === $status && ! current_user_can( 'publish_posts' ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to create private posts.', array( 'status' => 403 ) );
+		}
 		return true;
 	}
 
@@ -155,12 +162,13 @@ class APMCP_Create_Post {
 			$term = get_term_by( 'slug', $slug, 'category' );
 			if ( $term ) {
 				$ids[] = $term->term_id;
-			} else {
+			} elseif ( current_user_can( 'manage_categories' ) ) {
 				$result = wp_insert_term( ucwords( str_replace( '-', ' ', $slug ) ), 'category', array( 'slug' => $slug ) );
 				if ( ! is_wp_error( $result ) ) {
 					$ids[] = $result['term_id'];
 				}
 			}
+			// If category doesn't exist and user can't create, silently skip.
 		}
 		return $ids;
 	}
