@@ -169,10 +169,20 @@ class APMCP_Search_Posts {
 			);
 		}
 
+		$filtered_total = (int) $query->found_posts;
+		$per_page       = min( (int) $input['per_page'], 100 );
+
+		// If we filtered out posts the user can't read, adjust totals
+		// to reflect what they actually see.
+		$page_diff = count( $query->posts ) - count( $posts );
+		if ( $page_diff > 0 ) {
+			$filtered_total = max( 0, $filtered_total - $page_diff );
+		}
+
 		return array(
 			'posts'       => $posts,
-			'total'       => count( $posts ),
-			'total_pages' => (int) $query->max_num_pages,
+			'total'       => $filtered_total,
+			'total_pages' => $per_page > 0 ? (int) ceil( $filtered_total / $per_page ) : 1,
 			'page'        => (int) $input['page'],
 		);
 	}
