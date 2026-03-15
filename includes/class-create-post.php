@@ -212,6 +212,9 @@ class APMCP_Create_Post {
 
 	/**
 	 * Resolve category slugs to IDs, creating categories that don't exist.
+	 *
+	 * @param array $slugs Category slugs.
+	 * @return int[] Category term IDs.
 	 */
 	private static function resolve_categories( $slugs ) {
 		$ids = array();

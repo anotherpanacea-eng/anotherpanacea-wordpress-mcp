@@ -24,7 +24,10 @@ class APMCP_Resource_Recent_Drafts {
 				'label'               => __( 'Recent Drafts Queue', 'anotherpanacea-mcp' ),
 				'description'         => __( 'Queue of the 20 most recently modified draft posts: title, author, modified date, categories, and excerpt for each.', 'anotherpanacea-mcp' ),
 				'category'            => 'anotherpanacea-mcp',
-				'input_schema'        => array( 'type' => 'object', 'properties' => array() ),
+				'input_schema'        => array(
+					'type'       => 'object',
+					'properties' => array(),
+				),
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -37,8 +40,14 @@ class APMCP_Resource_Recent_Drafts {
 									'title'      => array( 'type' => 'string' ),
 									'slug'       => array( 'type' => 'string' ),
 									'author'     => array( 'type' => 'string' ),
-									'modified'   => array( 'type' => 'string', 'format' => 'date-time' ),
-									'categories' => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
+									'modified'   => array(
+									'type'   => 'string',
+									'format' => 'date-time',
+								),
+									'categories' => array(
+									'type'  => 'array',
+									'items' => array( 'type' => 'string' ),
+								),
 									'excerpt'    => array( 'type' => 'string' ),
 								),
 							),
@@ -85,14 +94,16 @@ class APMCP_Resource_Recent_Drafts {
 	 * @param array|null $input Ability input parameters.
 	 * @return array|WP_Error
 	 */
-	public static function execute( $input = null ) {
-		$posts = get_posts( array(
-			'post_type'      => 'post',
-			'post_status'    => 'draft',
-			'posts_per_page' => 20,
-			'orderby'        => 'modified',
-			'order'          => 'DESC',
-		) );
+	public static function execute( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		$posts = get_posts(
+			array(
+				'post_type'      => 'post',
+				'post_status'    => 'draft',
+				'posts_per_page' => 20,
+				'orderby'        => 'modified',
+				'order'          => 'DESC',
+			)
+		);
 
 		$drafts = array();
 		foreach ( $posts as $post ) {
@@ -112,7 +123,7 @@ class APMCP_Resource_Recent_Drafts {
 				'slug'       => $post->post_name,
 				'author'     => $author_name,
 				'modified'   => $post->post_modified_gmt ? mysql2date( 'c', $post->post_modified_gmt ) : null,
-				'categories' => $categories ?: array(),
+				'categories' => $categories ? $categories : array(),
 				'excerpt'    => $post->post_excerpt,
 			);
 		}

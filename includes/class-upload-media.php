@@ -182,7 +182,7 @@ class APMCP_Upload_Media {
 				'disallowed_mime_type',
 				sprintf(
 					'MIME type "%s" is not allowed. Allowed types: %s.',
-					$detected_mime ?: 'unknown',
+					$detected_mime ? $detected_mime : 'unknown',
 					implode( ', ', self::ALLOWED_MIME_TYPES )
 				),
 				array( 'status' => 400 )
@@ -223,10 +223,12 @@ class APMCP_Upload_Media {
 
 		// Set caption.
 		if ( ! empty( $input['caption'] ) ) {
-			wp_update_post( array(
-				'ID'           => $attachment_id,
-				'post_excerpt' => sanitize_textarea_field( $input['caption'] ),
-			) );
+			wp_update_post(
+				array(
+					'ID'           => $attachment_id,
+					'post_excerpt' => sanitize_textarea_field( $input['caption'] ),
+				)
+			);
 		}
 
 		$attachment = get_post( $attachment_id );

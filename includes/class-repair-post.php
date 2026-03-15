@@ -370,10 +370,13 @@ class APMCP_Repair_Post {
 		);
 	}
 
-	// ── Repair operations ─────────────────────────────────────────────
+	// Repair operations.
 
 	/**
 	 * Convert HTTP links to HTTPS.
+	 *
+	 * @param string $content Post content.
+	 * @return array Result with content, changed flag, description, and details.
 	 */
 	private static function repair_http_to_https( $content ) {
 		$count = 0;
@@ -413,6 +416,9 @@ class APMCP_Repair_Post {
 
 	/**
 	 * Strip deprecated HTML tags, keeping inner content.
+	 *
+	 * @param string $content Post content.
+	 * @return array Result with content, changed flag, description, and details.
 	 */
 	private static function repair_strip_deprecated( $content ) {
 		$tags_found = array();
@@ -440,6 +446,9 @@ class APMCP_Repair_Post {
 
 	/**
 	 * Normalize whitespace in content.
+	 *
+	 * @param string $content Post content.
+	 * @return array Result with content, changed flag, description, and details.
 	 */
 	private static function repair_whitespace( $content ) {
 		$original = $content;
@@ -467,6 +476,9 @@ class APMCP_Repair_Post {
 
 	/**
 	 * Remove empty HTML tags.
+	 *
+	 * @param string $content Post content.
+	 * @return array Result with content, changed flag, description, and details.
 	 */
 	private static function repair_strip_empty_tags( $content ) {
 		$original = $content;
@@ -499,6 +511,9 @@ class APMCP_Repair_Post {
 
 	/**
 	 * Generate an excerpt from content.
+	 *
+	 * @param string $content Post content.
+	 * @return string|null Generated excerpt or null if content is empty.
 	 */
 	private static function generate_excerpt( $content ) {
 		// Strip block comments.

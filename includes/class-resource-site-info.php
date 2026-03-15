@@ -24,7 +24,10 @@ class APMCP_Resource_Site_Info {
 				'label'               => __( 'Site Info', 'anotherpanacea-mcp' ),
 				'description'         => __( 'Basic site information: title, tagline, URL, timezone, date format, language, active theme name, and WordPress version.', 'anotherpanacea-mcp' ),
 				'category'            => 'anotherpanacea-mcp',
-				'input_schema'        => array( 'type' => 'object', 'properties' => array() ),
+				'input_schema'        => array(
+					'type'       => 'object',
+					'properties' => array(),
+				),
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -77,7 +80,7 @@ class APMCP_Resource_Site_Info {
 	 * @param array|null $input Ability input parameters.
 	 * @return array|WP_Error
 	 */
-	public static function execute( $input = null ) {
+	public static function execute( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		global $wp_version;
 
 		$theme = wp_get_theme();
@@ -86,7 +89,7 @@ class APMCP_Resource_Site_Info {
 			'title'        => get_bloginfo( 'name' ),
 			'tagline'      => get_bloginfo( 'description' ),
 			'url'          => get_bloginfo( 'url' ),
-			'timezone'     => get_option( 'timezone_string' ) ?: 'UTC' . get_option( 'gmt_offset' ),
+			'timezone'     => get_option( 'timezone_string' ) ? get_option( 'timezone_string' ) : 'UTC' . get_option( 'gmt_offset' ),
 			'date_format'  => get_option( 'date_format' ),
 			'language'     => get_bloginfo( 'language' ),
 			'active_theme' => $theme->get( 'Name' ),

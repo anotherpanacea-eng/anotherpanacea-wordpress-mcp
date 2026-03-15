@@ -102,9 +102,14 @@ class APMCP_Get_Blocks {
 		$raw_blocks = parse_blocks( $post->post_content );
 
 		// Filter out empty/null blocks (whitespace-only filler with no blockName).
-		$raw_blocks = array_values( array_filter( $raw_blocks, function ( $block ) {
-			return ! empty( $block['blockName'] );
-		} ) );
+		$raw_blocks = array_values(
+			array_filter(
+				$raw_blocks,
+				function ( $block ) {
+					return ! empty( $block['blockName'] );
+				}
+			)
+		);
 
 		$blocks = array();
 		foreach ( $raw_blocks as $index => $block ) {
@@ -112,7 +117,7 @@ class APMCP_Get_Blocks {
 			$blocks[]   = array(
 				'index'      => $index,
 				'block_name' => $block['blockName'],
-				'attrs'      => $block['attrs'] ?: new stdClass(),
+				'attrs'      => $block['attrs'] ? $block['attrs'] : new stdClass(),
 				'inner_html' => $inner_html,
 				'inner_text' => wp_strip_all_tags( $inner_html ),
 			);

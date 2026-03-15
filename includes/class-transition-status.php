@@ -84,8 +84,9 @@ class APMCP_Transition_Status {
 		// Publishing and private both require publish_posts capability.
 		$status = $input['status'] ?? '';
 		if ( in_array( $status, array( 'publish', 'private' ), true ) ) {
-			// We can't know the post type from just the ID in the permission callback,
-			// so check both capabilities — the per-post check in execute() is the real gate.
+			// We can't know the post type from just the ID in the permission
+			// callback, so check both capabilities. The per-post check in
+			// execute() is the real gate.
 			if ( ! current_user_can( 'publish_posts' ) && ! current_user_can( 'publish_pages' ) ) {
 				return new WP_Error( 'forbidden', 'You do not have permission to publish or make content private.', array( 'status' => 403 ) );
 			}
@@ -119,7 +120,10 @@ class APMCP_Transition_Status {
 				return new WP_Error(
 					'conflict',
 					'Post was modified since you last read it.',
-					array( 'status' => 409, 'actual_modified_gmt' => $actual )
+					array(
+					'status'             => 409,
+					'actual_modified_gmt' => $actual,
+				)
 				);
 			}
 		}

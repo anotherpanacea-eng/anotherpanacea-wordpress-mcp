@@ -48,7 +48,10 @@ class APMCP_List_Revisions {
 					'type'       => 'object',
 					'properties' => array(
 						'post_id'   => array( 'type' => 'integer' ),
-						'revisions' => array( 'type' => 'array', 'items' => array( 'type' => 'object' ) ),
+						'revisions' => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'object' ),
+					),
 						'total'     => array( 'type' => 'integer' ),
 					),
 				),
@@ -125,6 +128,10 @@ class APMCP_List_Revisions {
 
 	/**
 	 * Simple line-based diff between current content and revision content.
+	 *
+	 * @param string $current  Current post content.
+	 * @param string $revision Revision post content.
+	 * @return string Diff output showing added and removed lines.
 	 */
 	private static function simple_diff( $current, $revision ) {
 		$current_lines  = explode( "\n", $current );

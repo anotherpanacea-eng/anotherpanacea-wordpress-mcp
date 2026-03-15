@@ -78,7 +78,10 @@ class APMCP_Search_Posts {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'posts'       => array( 'type' => 'array', 'items' => array( 'type' => 'object' ) ),
+						'posts'       => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'object' ),
+					),
 						'total'       => array( 'type' => 'integer' ),
 						'total_pages' => array( 'type' => 'integer' ),
 						'page'        => array( 'type' => 'integer' ),
@@ -125,18 +128,21 @@ class APMCP_Search_Posts {
 	 * @return array|WP_Error
 	 */
 	public static function execute( $input = null ) {
-		$input = wp_parse_args( $input ?? array(), array(
-			'status'   => 'draft',
-			'search'   => '',
-			'category' => '',
-			'tag'      => '',
-			'after'    => '',
-			'before'   => '',
-			'per_page' => 20,
-			'page'     => 1,
-			'orderby'   => 'modified',
-			'post_type' => 'post',
-		) );
+		$input = wp_parse_args(
+			$input ?? array(),
+			array(
+				'status'    => 'draft',
+				'search'    => '',
+				'category'  => '',
+				'tag'       => '',
+				'after'     => '',
+				'before'    => '',
+				'per_page'  => 20,
+				'page'      => 1,
+				'orderby'   => 'modified',
+				'post_type' => 'post',
+			)
+		);
 
 		// Build the status array, respecting capabilities.
 		if ( 'any' === $input['status'] ) {
@@ -159,7 +165,7 @@ class APMCP_Search_Posts {
 
 		// Scope the query at the database level so pagination is accurate.
 		// Users who can edit_others_posts (Editors+) see all posts.
-		// Users who can't (Authors/Contributors) only see their own
+		// Users who can't (Authors/Contributors) only see their own.
 		// non-published posts, matching WP core REST API behavior.
 		if ( ! current_user_can( 'page' === $input['post_type'] ? 'edit_others_pages' : 'edit_others_posts' ) ) {
 			$requested = is_array( $statuses ) ? $statuses : array( $statuses );
@@ -209,7 +215,7 @@ class APMCP_Search_Posts {
 				'modified'   => $post->post_modified_gmt ? mysql2date( 'c', $post->post_modified_gmt ) : null,
 				'categories' => $categories,
 				'tags'       => $tags,
-				'excerpt'    => wp_trim_words( $post->post_excerpt ?: $post->post_content, 30 ),
+				'excerpt'    => wp_trim_words( $post->post_excerpt ? $post->post_excerpt : $post->post_content, 30 ),
 			);
 		}
 

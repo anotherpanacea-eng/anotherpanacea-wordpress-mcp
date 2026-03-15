@@ -29,7 +29,7 @@ class APMCP_Markdown_Converter {
 
 		// Remove block comments wrapping, processing specific blocks.
 
-		// Headings: <!-- wp:heading {"level":N} --><hN>...</hN><!-- /wp:heading -->
+		// Headings: <!-- wp:heading {"level":N} --><hN>...</hN><!-- /wp:heading -->.
 		$md = preg_replace_callback(
 			'/<!-- wp:heading\s*(\{[^}]*\})?\s*-->\s*<h([1-6])[^>]*>(.*?)<\/h\2>\s*<!-- \/wp:heading -->/s',
 			function ( $m ) {
@@ -40,7 +40,7 @@ class APMCP_Markdown_Converter {
 			$md
 		);
 
-		// Images: <!-- wp:image {...} --><figure...><img src="..." alt="...".../>...</figure><!-- /wp:image -->
+		// Images: <!-- wp:image {...} --><figure...><img src="..." alt="...".../>...</figure><!-- /wp:image -->.
 		$md = preg_replace_callback(
 			'/<!-- wp:image\s*(\{[^}]*\})?\s*-->\s*<figure[^>]*>\s*<img[^>]*src="([^"]*)"[^>]*?\/?>\s*(?:<figcaption[^>]*>(.*?)<\/figcaption>)?\s*<\/figure>\s*<!-- \/wp:image -->/s',
 			function ( $m ) {
@@ -63,7 +63,7 @@ class APMCP_Markdown_Converter {
 			$md
 		);
 
-		// Code blocks: <!-- wp:code --><pre...><code>...</code></pre><!-- /wp:code -->
+		// Code blocks: <!-- wp:code --><pre...><code>...</code></pre><!-- /wp:code -->.
 		$md = preg_replace_callback(
 			'/<!-- wp:code\s*(\{[^}]*\})?\s*-->\s*<pre[^>]*>\s*<code[^>]*>(.*?)<\/code>\s*<\/pre>\s*<!-- \/wp:code -->/s',
 			function ( $m ) {
@@ -81,7 +81,7 @@ class APMCP_Markdown_Converter {
 			$md
 		);
 
-		// Blockquotes: <!-- wp:quote --><blockquote...><p>...</p></blockquote><!-- /wp:quote -->
+		// Blockquotes: <!-- wp:quote --><blockquote...><p>...</p></blockquote><!-- /wp:quote -->.
 		$md = preg_replace_callback(
 			'/<!-- wp:quote\s*(\{[^}]*\})?\s*-->\s*<blockquote[^>]*>(.*?)<\/blockquote>\s*<!-- \/wp:quote -->/s',
 			function ( $m ) {
@@ -90,14 +90,20 @@ class APMCP_Markdown_Converter {
 				$inner = preg_replace( '/<p[^>]*>(.*?)<\/p>/s', '$1', $inner );
 				$inner = strip_tags( $inner );
 				$lines = explode( "\n", trim( $inner ) );
-				return implode( "\n", array_map( function ( $line ) {
-					return '> ' . trim( $line );
-				}, $lines ) );
+				return implode(
+					"\n",
+					array_map(
+						function ( $line ) {
+							return '> ' . trim( $line );
+						},
+						$lines
+					)
+				);
 			},
 			$md
 		);
 
-		// Ordered lists: <!-- wp:list {"ordered":true} -->
+		// Ordered lists: <!-- wp:list {"ordered":true} -->.
 		$md = preg_replace_callback(
 			'/<!-- wp:list\s*\{[^}]*"ordered"\s*:\s*true[^}]*\}\s*-->\s*<ol[^>]*>(.*?)<\/ol>\s*<!-- \/wp:list -->/s',
 			function ( $m ) {
@@ -106,7 +112,7 @@ class APMCP_Markdown_Converter {
 			$md
 		);
 
-		// Unordered lists: <!-- wp:list --> or <!-- wp:list {...} --> (without ordered:true)
+		// Unordered lists: <!-- wp:list --> or <!-- wp:list {...} --> (without ordered:true).
 		$md = preg_replace_callback(
 			'/<!-- wp:list\s*(\{[^}]*\})?\s*-->\s*<ul[^>]*>(.*?)<\/ul>\s*<!-- \/wp:list -->/s',
 			function ( $m ) {
@@ -115,19 +121,19 @@ class APMCP_Markdown_Converter {
 			$md
 		);
 
-		// Separator: <!-- wp:separator --> ... <!-- /wp:separator -->
+		// Separator: <!-- wp:separator --> ... <!-- /wp:separator -->.
 		$md = preg_replace(
 			'/<!-- wp:separator\s*(\{[^}]*\})?\s*-->\s*<hr[^>]*\/?>\s*<!-- \/wp:separator -->/s',
 			'---',
 			$md
 		);
 
-		// Paragraphs: <!-- wp:paragraph --><p>...</p><!-- /wp:paragraph -->
+		// Paragraphs: <!-- wp:paragraph --><p>...</p><!-- /wp:paragraph -->.
 		$md = preg_replace_callback(
 			'/<!-- wp:paragraph\s*(\{[^}]*\})?\s*-->\s*<p[^>]*>(.*?)<\/p>\s*<!-- \/wp:paragraph -->/s',
 			function ( $m ) {
 				$text = $m[2];
-				// Convert inline HTML: <strong>, <em>, <a>, <code>
+				// Convert inline HTML: <strong>, <em>, <a>, <code>.
 				$text = self::inline_html_to_markdown( $text );
 				return trim( $text );
 			},
@@ -203,14 +209,17 @@ class APMCP_Markdown_Converter {
 
 		// Strip raw HTML tags that aren't part of Markdown syntax.
 		// Allow only the inline elements that inline_markdown_to_html produces,
-		// preventing callers from smuggling arbitrary HTML/block markup through
-		// the "markdown" format.
-		$markdown = wp_kses( $markdown, array(
-			'strong' => array(),
-			'em'     => array(),
-			'code'   => array(),
-			'a'      => array( 'href' => array() ),
-		) );
+		// preventing callers from smuggling arbitrary HTML/block markup
+		// through the "markdown" format.
+		$markdown = wp_kses(
+			$markdown,
+			array(
+				'strong' => array(),
+				'em'     => array(),
+				'code'   => array(),
+				'a'      => array( 'href' => array() ),
+			)
+		);
 
 		$lines  = explode( "\n", $markdown );
 		$blocks = array();
@@ -246,7 +255,7 @@ class APMCP_Markdown_Converter {
 			if ( preg_match( '/^(#{1,6})\s+(.+)$/', $line, $m ) ) {
 				$level = strlen( $m[1] );
 				$text  = self::inline_markdown_to_html( trim( $m[2] ) );
-				$attrs = $level !== 2 ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
+				$attrs = 2 !== $level ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
 				$blocks[] = "<!-- wp:heading{$attrs} -->\n<h{$level}>{$text}</h{$level}>\n<!-- /wp:heading -->";
 				$i++;
 				continue;
@@ -287,9 +296,15 @@ class APMCP_Markdown_Converter {
 					$i++;
 				}
 				$paragraphs = self::group_into_paragraphs( $quote_lines );
-				$inner      = implode( "\n", array_map( function ( $p ) {
-					return '<p>' . APMCP_Markdown_Converter::inline_markdown_to_html( $p ) . '</p>';
-				}, $paragraphs ) );
+				$inner = implode(
+					"\n",
+					array_map(
+						function ( $p ) {
+							return '<p>' . APMCP_Markdown_Converter::inline_markdown_to_html( $p ) . '</p>';
+						},
+						$paragraphs
+					)
+				);
 				$blocks[] = "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\">{$inner}</blockquote>\n<!-- /wp:quote -->";
 				continue;
 			}
@@ -301,9 +316,15 @@ class APMCP_Markdown_Converter {
 					$list_lines[] = self::inline_markdown_to_html( $m[1] );
 					$i++;
 				}
-				$items = implode( "\n", array_map( function ( $item ) {
-					return "<li>{$item}</li>";
-				}, $list_lines ) );
+				$items = implode(
+					"\n",
+					array_map(
+						function ( $item ) {
+							return "<li>{$item}</li>";
+						},
+						$list_lines
+					)
+				);
 				$blocks[] = "<!-- wp:list -->\n<ul>{$items}</ul>\n<!-- /wp:list -->";
 				continue;
 			}
@@ -315,9 +336,15 @@ class APMCP_Markdown_Converter {
 					$list_lines[] = self::inline_markdown_to_html( $m[1] );
 					$i++;
 				}
-				$items = implode( "\n", array_map( function ( $item ) {
-					return "<li>{$item}</li>";
-				}, $list_lines ) );
+				$items = implode(
+					"\n",
+					array_map(
+						function ( $item ) {
+							return "<li>{$item}</li>";
+						},
+						$list_lines
+					)
+				);
 				$blocks[] = "<!-- wp:list {\"ordered\":true} -->\n<ol>{$items}</ol>\n<!-- /wp:list -->";
 				continue;
 			}
@@ -458,7 +485,7 @@ class APMCP_Markdown_Converter {
 			case 'h6':
 				$level = (int) substr( $tag, 1 );
 				$inner = self::get_inner_html( $node, $doc );
-				$attrs = $level !== 2 ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
+				$attrs = 2 !== $level ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
 				return "<!-- wp:heading{$attrs} -->\n<{$tag}>{$inner}</{$tag}>\n<!-- /wp:heading -->";
 
 			case 'blockquote':
@@ -635,6 +662,10 @@ class APMCP_Markdown_Converter {
 
 	/**
 	 * Convert an HTML list (<li> items) to Markdown.
+	 *
+	 * @param string $html    HTML containing <li> items.
+	 * @param bool   $ordered Whether the list is ordered.
+	 * @return string Markdown list.
 	 */
 	private static function html_list_to_markdown( $html, $ordered = false ) {
 		$items = array();
@@ -655,6 +686,9 @@ class APMCP_Markdown_Converter {
 
 	/**
 	 * Group lines into paragraphs (split on blank lines).
+	 *
+	 * @param array $lines Array of text lines.
+	 * @return array Array of paragraph strings.
 	 */
 	private static function group_into_paragraphs( $lines ) {
 		$paragraphs = array();

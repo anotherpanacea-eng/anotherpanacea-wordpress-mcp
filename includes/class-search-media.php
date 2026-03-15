@@ -59,7 +59,10 @@ class APMCP_Search_Media {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'media'       => array( 'type' => 'array', 'items' => array( 'type' => 'object' ) ),
+						'media'       => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
+						),
 						'total'       => array( 'type' => 'integer' ),
 						'total_pages' => array( 'type' => 'integer' ),
 						'page'        => array( 'type' => 'integer' ),
@@ -93,14 +96,17 @@ class APMCP_Search_Media {
 	 * @return array|WP_Error
 	 */
 	public static function execute( $input = null ) {
-		$input = wp_parse_args( $input ?? array(), array(
-			'search'    => '',
-			'mime_type' => '',
-			'after'     => '',
-			'before'    => '',
-			'per_page'  => 20,
-			'page'      => 1,
-		) );
+		$input = wp_parse_args(
+			$input ?? array(),
+			array(
+				'search'    => '',
+				'mime_type' => '',
+				'after'     => '',
+				'before'    => '',
+				'per_page'  => 20,
+				'page'      => 1,
+			)
+		);
 
 		$args = array(
 			'post_type'      => 'attachment',
@@ -144,7 +150,7 @@ class APMCP_Search_Media {
 				'caption'     => $attachment->post_excerpt,
 				'description' => $attachment->post_content,
 				'date'        => mysql2date( 'c', $attachment->post_date_gmt ),
-				'filesize'    => filesize( get_attached_file( $attachment->ID ) ) ?: null,
+				'filesize'    => filesize( get_attached_file( $attachment->ID ) ) ? filesize( get_attached_file( $attachment->ID ) ) : null,
 			);
 		}
 

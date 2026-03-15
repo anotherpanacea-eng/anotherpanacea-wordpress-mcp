@@ -65,7 +65,10 @@ class APMCP_Search_Comments {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'comments'    => array( 'type' => 'array', 'items' => array( 'type' => 'object' ) ),
+						'comments'    => array(
+						'type'  => 'array',
+						'items' => array( 'type' => 'object' ),
+					),
 						'total'       => array( 'type' => 'integer' ),
 						'page'        => array( 'type' => 'integer' ),
 						'total_pages' => array( 'type' => 'integer' ),
@@ -106,15 +109,18 @@ class APMCP_Search_Comments {
 	 * @return array|WP_Error
 	 */
 	public static function execute( $input = null ) {
-		$input = wp_parse_args( $input ?? array(), array(
-			'search'       => '',
-			'post_id'      => 0,
-			'status'       => 'approved',
-			'author_email' => '',
-			'per_page'     => 20,
-			'page'         => 1,
-			'order'        => 'desc',
-		) );
+		$input = wp_parse_args(
+			$input ?? array(),
+			array(
+				'search'       => '',
+				'post_id'      => 0,
+				'status'       => 'approved',
+				'author_email' => '',
+				'per_page'     => 20,
+				'page'         => 1,
+				'order'        => 'desc',
+			)
+		);
 
 		$per_page = min( (int) $input['per_page'], 100 );
 		$page     = max( (int) $input['page'], 1 );

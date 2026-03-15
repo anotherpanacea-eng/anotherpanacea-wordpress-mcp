@@ -145,15 +145,23 @@ class APMCP_Update_Blocks {
 				return new WP_Error(
 					'conflict',
 					'Post was modified since you last read it.',
-					array( 'status' => 409, 'actual_modified_gmt' => $actual )
+					array(
+					'status'             => 409,
+					'actual_modified_gmt' => $actual,
+				)
 				);
 			}
 		}
 
 		// Parse existing content into a clean working array (filter empty filler blocks).
-		$blocks = array_values( array_filter( parse_blocks( $post->post_content ), function ( $block ) {
-			return ! empty( $block['blockName'] );
-		} ) );
+		$blocks = array_values(
+			array_filter(
+				parse_blocks( $post->post_content ),
+				function ( $block ) {
+					return ! empty( $block['blockName'] );
+				}
+			)
+		);
 
 		$operations_applied = 0;
 
@@ -240,7 +248,13 @@ class APMCP_Update_Blocks {
 
 		// Serialize blocks back to block markup and save.
 		$serialized = serialize_blocks( $blocks );
-		$result     = wp_update_post( array( 'ID' => $post_id, 'post_content' => $serialized ), true );
+		$result     = wp_update_post(
+			array(
+				'ID'           => $post_id,
+				'post_content' => $serialized,
+			),
+			true
+		);
 
 		if ( is_wp_error( $result ) ) {
 			return $result;
@@ -248,9 +262,14 @@ class APMCP_Update_Blocks {
 
 		// Re-fetch to get freshly parsed clean output.
 		$updated_post = get_post( $post_id );
-		$final_blocks = array_values( array_filter( parse_blocks( $updated_post->post_content ), function ( $block ) {
-			return ! empty( $block['blockName'] );
-		} ) );
+		$final_blocks = array_values(
+			array_filter(
+				parse_blocks( $updated_post->post_content ),
+				function ( $block ) {
+					return ! empty( $block['blockName'] );
+				}
+			)
+		);
 
 		$output_blocks = array();
 		foreach ( $final_blocks as $index => $block ) {
@@ -258,7 +277,7 @@ class APMCP_Update_Blocks {
 			$output_blocks[] = array(
 				'index'      => $index,
 				'block_name' => $block['blockName'],
-				'attrs'      => $block['attrs'] ?: new stdClass(),
+				'attrs'      => $block['attrs'] ? $block['attrs'] : new stdClass(),
 				'inner_html' => $inner_html,
 				'inner_text' => wp_strip_all_tags( $inner_html ),
 			);
@@ -287,9 +306,14 @@ class APMCP_Update_Blocks {
 			// Empty content: produce a single empty paragraph block.
 			$markup = '<!-- wp:paragraph --><p></p><!-- /wp:paragraph -->';
 			$parsed = parse_blocks( $markup );
-			return array_values( array_filter( $parsed, function ( $b ) {
-				return ! empty( $b['blockName'] );
-			} ) );
+			return array_values(
+				array_filter(
+					$parsed,
+					function ( $b ) {
+						return ! empty( $b['blockName'] );
+					}
+				)
+			);
 		}
 
 		if ( 'markdown' === $format ) {
@@ -303,9 +327,14 @@ class APMCP_Update_Blocks {
 		}
 
 		$parsed = parse_blocks( $markup );
-		$parsed = array_values( array_filter( $parsed, function ( $b ) {
-			return ! empty( $b['blockName'] );
-		} ) );
+		$parsed = array_values(
+			array_filter(
+				$parsed,
+				function ( $b ) {
+					return ! empty( $b['blockName'] );
+				}
+			)
+		);
 
 		return $parsed;
 	}

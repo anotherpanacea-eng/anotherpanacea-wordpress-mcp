@@ -9,6 +9,8 @@
  * Requires PHP: 7.4
  * GitHub Plugin URI: anotherpanacea-eng/anotherpanacea-wordpress-mcp
  * Primary Branch:    main
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,6 +29,11 @@ define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
  */
 add_action( 'plugins_loaded', 'apmcp_maybe_load_bundled_mcp_adapter', 5 );
 
+/**
+ * Conditionally load the bundled MCP Adapter plugin.
+ *
+ * Skips loading if the standalone MCP Adapter plugin is already active.
+ */
 function apmcp_maybe_load_bundled_mcp_adapter() {
 	// If MCP Adapter is already available (standalone plugin), skip the bundled copy.
 	if ( class_exists( 'WP\MCP\Core\McpAdapter' ) ) {
@@ -85,6 +92,9 @@ register_activation_hook( __FILE__, array( 'APMCP_Audit_Log', 'create_table' ) )
 // Server segmentation: register reader, editorial, and full MCP surfaces.
 APMCP_Server_Segmentation::init();
 
+/**
+ * Register the AnotherPanacea MCP ability category.
+ */
 function apmcp_register_category() {
 	if ( function_exists( 'wp_register_ability_category' ) ) {
 		wp_register_ability_category(
@@ -97,6 +107,9 @@ function apmcp_register_category() {
 	}
 }
 
+/**
+ * Register all MCP abilities for content management.
+ */
 function apmcp_register_abilities() {
 	// Audit log ability.
 	APMCP_Audit_Log::register();
@@ -152,6 +165,9 @@ function apmcp_register_abilities() {
  */
 add_action( 'rest_api_init', 'apmcp_register_compat_route' );
 
+/**
+ * Register a compatibility REST route proxying to the MCP Adapter endpoint.
+ */
 function apmcp_register_compat_route() {
 	register_rest_route(
 		'wp/v2',

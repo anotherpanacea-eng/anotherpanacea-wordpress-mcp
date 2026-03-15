@@ -112,9 +112,9 @@ class APMCP_Audit_Log {
 		);
 	}
 
-	// -------------------------------------------------------------------------
-	// WordPress core action callbacks
-	// -------------------------------------------------------------------------
+	/**
+	 * WordPress core action callbacks.
+	 */
 
 	/**
 	 * Log new post insertions.
@@ -152,8 +152,8 @@ class APMCP_Audit_Log {
 			return;
 		}
 		// Determine which ability drove this change.
-		// We can't know for certain, so we record a generic label for transitions,
-		// and a specific label for trashing (handled in on_trashed_post).
+		// We can't know for certain, so we record a generic label for
+		// transitions and a specific label for trashing (handled in on_trashed_post).
 		$ability = 'to-trash' === $new_status
 			? 'anotherpanacea-mcp/delete-post'
 			: 'anotherpanacea-mcp/transition-post-status';
@@ -171,14 +171,14 @@ class APMCP_Audit_Log {
 		if ( ! $post ) {
 			return;
 		}
-		// transition_post_status fires before this, so the before_status recorded
-		// there will have the original status. Here we record a dedicated trash entry
-		// only if the type is one we manage.
+		// The transition_post_status hook fires before this, so the
+		// before_status recorded there will have the original status.
+		// Here we record a dedicated trash entry only if the type is one we manage.
 		if ( ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return;
 		}
-		// The actual transition is already captured by on_transition_post_status;
-		// no duplicate log needed here unless we want finer granularity.
+		// The actual transition is already captured by on_transition_post_status.
+		// No duplicate log needed here unless we want finer granularity.
 		// Intentionally left as a no-op to avoid duplicate rows.
 	}
 
@@ -204,9 +204,9 @@ class APMCP_Audit_Log {
 		self::log( 'anotherpanacea-mcp/update-media', $attachment_id, 'inherit', 'inherit' );
 	}
 
-	// -------------------------------------------------------------------------
-	// list-audit-log ability
-	// -------------------------------------------------------------------------
+	/**
+	 * List-audit-log ability.
+	 */
 
 	/**
 	 * Register the list-audit-log ability.
@@ -297,6 +297,12 @@ class APMCP_Audit_Log {
 		return true;
 	}
 
+	/**
+	 * Execute the list-audit-log ability.
+	 *
+	 * @param array|null $input Ability input with filtering and pagination parameters.
+	 * @return array Paginated audit log entries.
+	 */
 	public static function execute( $input = null ) {
 		global $wpdb;
 

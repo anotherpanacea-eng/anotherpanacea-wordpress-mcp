@@ -24,7 +24,10 @@ class APMCP_Resource_Taxonomy_Map {
 				'label'               => __( 'Taxonomy Map', 'anotherpanacea-mcp' ),
 				'description'         => __( 'Full category and tag taxonomy tree: hierarchical categories with slugs, names, descriptions, parent relationships, and post counts; plus all tags with counts.', 'anotherpanacea-mcp' ),
 				'category'            => 'anotherpanacea-mcp',
-				'input_schema'        => array( 'type' => 'object', 'properties' => array() ),
+				'input_schema'        => array(
+					'type'       => 'object',
+					'properties' => array(),
+				),
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
@@ -96,20 +99,24 @@ class APMCP_Resource_Taxonomy_Map {
 	 * @param array|null $input Ability input parameters.
 	 * @return array|WP_Error
 	 */
-	public static function execute( $input = null ) {
-		$category_terms = get_terms( array(
-			'taxonomy'   => 'category',
-			'hide_empty' => false,
-			'orderby'    => 'name',
-			'order'      => 'ASC',
-		) );
+	public static function execute( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+		$category_terms = get_terms(
+			array(
+				'taxonomy'   => 'category',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
 
-		$tag_terms = get_terms( array(
-			'taxonomy'   => 'post_tag',
-			'hide_empty' => false,
-			'orderby'    => 'name',
-			'order'      => 'ASC',
-		) );
+		$tag_terms = get_terms(
+			array(
+				'taxonomy'   => 'post_tag',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
 
 		if ( is_wp_error( $category_terms ) ) {
 			$category_terms = array();

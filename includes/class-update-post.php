@@ -139,7 +139,10 @@ class APMCP_Update_Post {
 				return new WP_Error(
 					'conflict',
 					'Post was modified since you last read it.',
-					array( 'status' => 409, 'actual_modified_gmt' => $actual )
+					array(
+					'status'             => 409,
+					'actual_modified_gmt' => $actual,
+				)
 				);
 			}
 		}

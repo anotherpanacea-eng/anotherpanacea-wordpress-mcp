@@ -20,6 +20,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Server segmentation: registers separate MCP surfaces with ability allowlists.
+ */
 class APMCP_Server_Segmentation {
 
 	/**
@@ -108,7 +111,11 @@ class APMCP_Server_Segmentation {
 		if ( empty( self::$surface_abilities ) ) {
 			self::$surface_abilities['reader']    = self::READER_ABILITIES;
 			self::$surface_abilities['editorial'] = array_merge( self::READER_ABILITIES, self::EDITORIAL_ADDITIONS );
-			self::$surface_abilities['full']      = array_merge( self::READER_ABILITIES, self::EDITORIAL_ADDITIONS, self::FULL_ADDITIONS );
+			self::$surface_abilities['full']      = array_merge(
+				self::READER_ABILITIES,
+				self::EDITORIAL_ADDITIONS,
+				self::FULL_ADDITIONS
+			);
 		}
 
 		return self::$surface_abilities[ $surface ] ?? array();
@@ -130,9 +137,17 @@ class APMCP_Server_Segmentation {
 				"anotherpanacea-mcp/discover-{$surface}",
 				array(
 					'label'               => sprintf( __( 'Discover %s abilities', 'anotherpanacea-mcp' ), ucfirst( $surface ) ),
-					'description'         => sprintf( __( 'List available abilities on the %s surface. %s', 'anotherpanacea-mcp' ), $surface, $desc ),
+					'description'         => sprintf(
+						/* translators: 1: surface name, 2: surface description. */
+						__( 'List available abilities on the %1$s surface. %2$s', 'anotherpanacea-mcp' ),
+						$surface,
+						$desc
+					),
 					'category'            => 'anotherpanacea-mcp',
-					'input_schema'        => array( 'type' => 'object', 'properties' => array() ),
+					'input_schema'        => array(
+						'type'       => 'object',
+						'properties' => array(),
+					),
 					'output_schema'       => array(
 						'type'       => 'object',
 						'properties' => array(
@@ -168,7 +183,12 @@ class APMCP_Server_Segmentation {
 				"anotherpanacea-mcp/execute-{$surface}",
 				array(
 					'label'               => sprintf( __( 'Execute %s ability', 'anotherpanacea-mcp' ), ucfirst( $surface ) ),
-					'description'         => sprintf( __( 'Execute an ability on the %s surface. %s', 'anotherpanacea-mcp' ), $surface, $desc ),
+					'description'         => sprintf(
+						/* translators: 1: surface name, 2: surface description. */
+						__( 'Execute an ability on the %1$s surface. %2$s', 'anotherpanacea-mcp' ),
+						$surface,
+						$desc
+					),
 					'category'            => 'anotherpanacea-mcp',
 					'input_schema'        => array(
 						'type'                 => 'object',
@@ -211,9 +231,13 @@ class APMCP_Server_Segmentation {
 
 	/**
 	 * Permission check shared by all wrapper abilities.
+	 *
 	 * Authentication is required; per-ability checks enforce granular access.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
 	 */
-	public static function check_permissions( $input = null ) {
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error( 'authentication_required', 'Authentication required.', array( 'status' => 401 ) );
 		}
@@ -223,7 +247,7 @@ class APMCP_Server_Segmentation {
 		return true;
 	}
 
-	// ── Discover callbacks ──────────────────────────────────────────────
+	// Discover callbacks.
 
 	/**
 	 * Discover callback for the reader surface.
@@ -295,7 +319,7 @@ class APMCP_Server_Segmentation {
 		return array( 'abilities' => $list );
 	}
 
-	// ── Execute callbacks ───────────────────────────────────────────────
+	// Execute callbacks.
 
 	/**
 	 * Execute callback for the reader surface.
@@ -340,7 +364,10 @@ class APMCP_Server_Segmentation {
 		$parameters   = empty( $input['parameters'] ) ? null : $input['parameters'];
 
 		if ( empty( $ability_name ) ) {
-			return array( 'success' => false, 'error' => 'ability_name is required.' );
+			return array(
+				'success' => false,
+				'error'   => 'ability_name is required.',
+			);
 		}
 
 		// Allowlist check: is this ability permitted on this surface?
@@ -358,36 +385,57 @@ class APMCP_Server_Segmentation {
 
 		// Resolve the ability.
 		if ( ! function_exists( 'wp_get_ability' ) ) {
-			return array( 'success' => false, 'error' => 'Abilities API not available.' );
+			return array(
+				'success' => false,
+				'error'   => 'Abilities API not available.',
+			);
 		}
 
 		$ability = wp_get_ability( $ability_name );
 		if ( ! $ability ) {
-			return array( 'success' => false, 'error' => "Ability '{$ability_name}' not found." );
+			return array(
+				'success' => false,
+				'error'   => "Ability '{$ability_name}' not found.",
+			);
 		}
 
 		// Check the ability's own permissions.
 		$permission = $ability->check_permissions( $parameters );
 		if ( is_wp_error( $permission ) ) {
-			return array( 'success' => false, 'error' => $permission->get_error_message() );
+			return array(
+				'success' => false,
+				'error'   => $permission->get_error_message(),
+			);
 		}
 		if ( ! $permission ) {
-			return array( 'success' => false, 'error' => 'Permission denied.' );
+			return array(
+				'success' => false,
+				'error'   => 'Permission denied.',
+			);
 		}
 
 		// Execute.
 		try {
 			$result = $ability->execute( $parameters );
 			if ( is_wp_error( $result ) ) {
-				return array( 'success' => false, 'error' => $result->get_error_message() );
+				return array(
+					'success' => false,
+					'error'   => $result->get_error_message(),
+				);
 			}
-			return array( 'success' => true, 'data' => $result );
+			return array(
+				'success' => true,
+				'data'    => $result,
+			);
 		} catch ( \Throwable $e ) {
-			return array( 'success' => false, 'error' => $e->getMessage() );
+			return array(
+				'success' => false,
+				'error'   => $e->getMessage(),
+			);
 		}
 	}
 
-	// ── Server registration ─────────────────────────────────────────────
+	// Server registration.
 
 	/**
 	 * Register 3 segmented MCP servers via the MCP Adapter.

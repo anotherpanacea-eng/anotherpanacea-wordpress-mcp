@@ -270,11 +270,14 @@ class APMCP_Audit_Post {
 					continue;
 				}
 
-				$response = wp_remote_head( $url, array(
-					'timeout'     => 5,
-					'redirection' => 3,
-					'sslverify'   => false,
-				) );
+				$response = wp_remote_head(
+					$url,
+					array(
+						'timeout'     => 5,
+						'redirection' => 3,
+						'sslverify'   => false,
+					)
+				);
 
 				if ( is_wp_error( $response ) ) {
 					$dead_links[] = array(
@@ -328,7 +331,14 @@ class APMCP_Audit_Post {
 		}
 
 		// Build summary.
-		$auto_fixable  = count( array_filter( $issues, function ( $i ) { return $i['auto_fixable']; } ) );
+		$auto_fixable = count(
+			array_filter(
+				$issues,
+				function ( $i ) {
+					return $i['auto_fixable'];
+				}
+			)
+		);
 		$needs_judgment = count( $issues ) - $auto_fixable;
 
 		return array(
@@ -348,10 +358,13 @@ class APMCP_Audit_Post {
 		);
 	}
 
-	// ── Helpers ────────────────────────────────────────────────────────
+	// Helpers.
 
 	/**
 	 * Find all HTTP (non-HTTPS) URLs in content.
+	 *
+	 * @param string $content Post content to scan.
+	 * @return array List of HTTP URLs found.
 	 */
 	private static function find_http_links( $content ) {
 		$links = array();
@@ -367,6 +380,9 @@ class APMCP_Audit_Post {
 
 	/**
 	 * Find deprecated HTML tags and their count.
+	 *
+	 * @param string $content Post content to scan.
+	 * @return array Associative array of tag name => count.
 	 */
 	private static function find_deprecated_html( $content ) {
 		$found = array();
@@ -380,6 +396,9 @@ class APMCP_Audit_Post {
 
 	/**
 	 * Find all image URLs in content (from img tags and markdown images).
+	 *
+	 * @param string $content Post content to scan.
+	 * @return array List of image URLs found.
 	 */
 	private static function find_image_urls( $content ) {
 		$urls = array();
@@ -396,6 +415,9 @@ class APMCP_Audit_Post {
 
 	/**
 	 * Find all link URLs in content.
+	 *
+	 * @param string $content Post content to scan.
+	 * @return array List of all link URLs found.
 	 */
 	private static function find_all_links( $content ) {
 		$urls = array();

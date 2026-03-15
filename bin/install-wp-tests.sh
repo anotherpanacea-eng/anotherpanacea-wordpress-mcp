@@ -74,8 +74,9 @@ install_wp() {
 			local ARCHIVE_NAME="wordpress-$WP_VERSION"
 		fi
 		download https://wordpress.org/${ARCHIVE_NAME}.zip $TMPDIR/wordpress.zip
-		unzip -q $TMPDIR/wordpress.zip -d $TMPDIR/
-		mv $TMPDIR/wordpress/* $WP_CORE_DIR
+		unzip -q $TMPDIR/wordpress.zip -d $TMPDIR/wordpress-extract
+		mv $TMPDIR/wordpress-extract/wordpress/* $WP_CORE_DIR
+		rm -rf $TMPDIR/wordpress-extract
 	fi
 
 	download https://raw.github.com/markoheijnen/wp-mysqli/master/db.php $WP_CORE_DIR/wp-content/db.php

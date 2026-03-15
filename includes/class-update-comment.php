@@ -94,10 +94,12 @@ class APMCP_Update_Comment {
 		$previous_status = $comment->comment_approved;
 
 		if ( ! empty( $input['content'] ) ) {
-			$result = wp_update_comment( array(
-				'comment_ID'      => $comment_id,
-				'comment_content' => wp_kses_post( $input['content'] ),
-			) );
+			$result = wp_update_comment(
+				array(
+					'comment_ID'      => $comment_id,
+					'comment_content' => wp_kses_post( $input['content'] ),
+				)
+			);
 
 			if ( is_wp_error( $result ) ) {
 				return new WP_Error( 'update_failed', 'Failed to update comment content.', array( 'status' => 500 ) );

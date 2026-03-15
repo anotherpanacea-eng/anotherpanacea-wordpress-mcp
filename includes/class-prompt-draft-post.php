@@ -98,12 +98,14 @@ class APMCP_Prompt_Draft_Post {
 		$category = isset( $input['category'] ) ? sanitize_text_field( $input['category'] ) : '';
 
 		// Build category list for context.
-		$category_terms = get_terms( array(
-			'taxonomy'   => 'category',
-			'hide_empty' => false,
-			'orderby'    => 'name',
-			'order'      => 'ASC',
-		) );
+		$category_terms = get_terms(
+			array(
+				'taxonomy'   => 'category',
+				'hide_empty' => false,
+				'orderby'    => 'name',
+				'order'      => 'ASC',
+			)
+		);
 
 		$category_list = '';
 		if ( ! is_wp_error( $category_terms ) && ! empty( $category_terms ) ) {
@@ -119,7 +121,7 @@ class APMCP_Prompt_Draft_Post {
 
 		$category_context = $category
 			? "The target category is: {$category}"
-			: "Choose the most appropriate category from the list below.";
+			: 'Choose the most appropriate category from the list below.';
 
 		$system_text = <<<PROMPT
 You are an editorial assistant for {$site_name} ({$site_url}).

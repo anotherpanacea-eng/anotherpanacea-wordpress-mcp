@@ -51,8 +51,14 @@ class APMCP_Get_Post {
 						'status'           => array( 'type' => 'string' ),
 						'content_markdown' => array( 'type' => 'string' ),
 						'content_raw'      => array( 'type' => 'string' ),
-						'categories'       => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
-						'tags'             => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
+						'categories'       => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'string' ),
+						),
+						'tags'             => array(
+							'type'  => 'array',
+							'items' => array( 'type' => 'string' ),
+						),
 						'preview_link'     => array( 'type' => 'string' ),
 					),
 				),
@@ -91,12 +97,14 @@ class APMCP_Get_Post {
 		if ( ! empty( $input['id'] ) ) {
 			$post = get_post( (int) $input['id'] );
 		} elseif ( ! empty( $input['slug'] ) ) {
-			$posts = get_posts( array(
-				'name'        => $input['slug'],
-				'post_type'   => ! empty( $input['post_type'] ) ? $input['post_type'] : array( 'post', 'page' ),
-				'post_status' => array( 'draft', 'publish', 'pending', 'private' ),
-				'numberposts' => 1,
-			) );
+			$posts = get_posts(
+				array(
+					'name'        => $input['slug'],
+					'post_type'   => ! empty( $input['post_type'] ) ? $input['post_type'] : array( 'post', 'page' ),
+					'post_status' => array( 'draft', 'publish', 'pending', 'private' ),
+					'numberposts' => 1,
+				)
+			);
 			$post = ! empty( $posts ) ? $posts[0] : null;
 		} else {
 			return new WP_Error( 'missing_param', 'Either id or slug is required.', array( 'status' => 400 ) );
@@ -129,7 +137,7 @@ class APMCP_Get_Post {
 			'categories'         => $categories,
 			'tags'               => $tags,
 			'excerpt'            => $post->post_excerpt,
-			'featured_media_id'  => $featured_id ?: null,
+			'featured_media_id'  => $featured_id ? $featured_id : null,
 			'featured_media_url' => $featured_url,
 			'link'               => get_permalink( $post->ID ),
 			'preview_link'       => get_preview_post_link( $post->ID ),
