@@ -1,10 +1,10 @@
 === AnotherPanacea MCP ===
 Contributors: anotherpanacea
 Tags: mcp, ai, content-management, abilities-api
-Requires at least: 6.8
+Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.2.0
 License: GPL-2.0-or-later
 
 Registers MCP abilities for full post lifecycle management via the WordPress Abilities API.
@@ -13,7 +13,7 @@ Registers MCP abilities for full post lifecycle management via the WordPress Abi
 
 AnotherPanacea MCP is an abilities provider plugin that gives Claude (via Claude Code or Claude Desktop) full post lifecycle control over a self-hosted WordPress site.
 
-Bundles [MCP Adapter](https://github.com/WordPress/mcp-adapter) v0.4.1, which translates MCP protocol to WordPress abilities. If MCP Adapter is already installed as a standalone plugin, the bundled copy is automatically skipped. No separate installation required.
+Requires [MCP Adapter](https://github.com/WordPress/mcp-adapter) to be installed separately. MCP Adapter translates MCP protocol to WordPress abilities.
 
 = Registered Abilities =
 
@@ -38,14 +38,20 @@ The plugin automatically converts between Markdown (what Claude works with) and 
 
 == Installation ==
 
-1. Upload the `anotherpanacea-mcp` directory to `wp-content/plugins/`.
-2. Activate the plugin. (MCP Adapter is bundled — no separate install needed.)
-3. Verify abilities are registered by visiting `https://your-site.com/wp-json/wp/v2/abilities` (requires authentication).
-4. If you already have MCP Adapter installed standalone, the bundled copy is automatically skipped.
+1. Install and activate [MCP Adapter](https://github.com/WordPress/mcp-adapter).
+2. Upload the `anotherpanacea-mcp` directory to `wp-content/plugins/`.
+3. Activate the plugin.
+4. Verify abilities are registered by visiting `https://your-site.com/wp-json/wp/v2/abilities` (requires authentication).
 
 == Changelog ==
+
+= 1.2.0 =
+* Remove bundled MCP Adapter — requires standalone installation.
+* Require WordPress 6.9+ (Abilities API in core).
+
+= 1.1.1 =
+* Add output_schema, show_in_rest, and MCP public meta to all abilities.
 
 = 1.0.0 =
 * Initial release with all Phase 1 and Phase 2 abilities.
 * Bidirectional Markdown ↔ Gutenberg block markup converter.
-* Bundles MCP Adapter v0.4.1.
