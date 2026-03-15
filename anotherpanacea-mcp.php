@@ -7,6 +7,8 @@
  * License:     GPL-2.0-or-later
  * Requires at least: 6.8
  * Requires PHP: 7.4
+ * GitHub Plugin URI: anotherpanacea-eng/anotherpanacea-wordpress-mcp
+ * Primary Branch:    main
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
