@@ -42,11 +42,19 @@ class APMCP_Upload_Media {
 						),
 					),
 				),
+				'output_schema'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'id'        => array( 'type' => 'integer' ),
+						'url'       => array( 'type' => 'string' ),
+						'alt_text'  => array( 'type' => 'string' ),
+						'filename'  => array( 'type' => 'string' ),
+						'mime_type' => array( 'type' => 'string' ),
+					),
+				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
-				'meta'                => array(
-					'mcp' => array( 'public' => true ),
-				),
+				'show_in_rest'        => true,
 			)
 		);
 	}

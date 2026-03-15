@@ -62,11 +62,18 @@ class APMCP_Search_Posts {
 						),
 					),
 				),
+				'output_schema'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'posts'       => array( 'type' => 'array', 'items' => array( 'type' => 'object' ) ),
+						'total'       => array( 'type' => 'integer' ),
+						'total_pages' => array( 'type' => 'integer' ),
+						'page'        => array( 'type' => 'integer' ),
+					),
+				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
-				'meta'                => array(
-					'mcp' => array( 'public' => true ),
-				),
+				'show_in_rest'        => true,
 			)
 		);
 	}

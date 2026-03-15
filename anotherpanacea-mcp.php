@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AnotherPanacea MCP
  * Description: Registers MCP abilities for content management via the WordPress Abilities API and MCP Adapter.
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Joshua Miller
  * License:     GPL-2.0-or-later
  * Requires at least: 6.8
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APMCP_VERSION', '1.0.0' );
+define( 'APMCP_VERSION', '1.1.0' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
@@ -53,10 +53,10 @@ require_once APMCP_DIR . 'includes/class-delete-post.php';
 /**
  * Register the ability category and all abilities.
  */
+add_action( 'wp_abilities_api_categories_init', 'apmcp_register_category' );
 add_action( 'wp_abilities_api_init', 'apmcp_register_abilities' );
 
-function apmcp_register_abilities() {
-	// Register our category first.
+function apmcp_register_category() {
 	if ( function_exists( 'wp_register_ability_category' ) ) {
 		wp_register_ability_category(
 			'anotherpanacea-mcp',
@@ -66,7 +66,9 @@ function apmcp_register_abilities() {
 			)
 		);
 	}
+}
 
+function apmcp_register_abilities() {
 	// Phase 1: Read-only abilities.
 	APMCP_Search_Posts::register();
 	APMCP_Get_Post::register();

@@ -62,11 +62,20 @@ class APMCP_Update_Post {
 						),
 					),
 				),
+				'output_schema'       => array(
+					'type'       => 'object',
+					'properties' => array(
+						'id'       => array( 'type' => 'integer' ),
+						'title'    => array( 'type' => 'string' ),
+						'slug'     => array( 'type' => 'string' ),
+						'status'   => array( 'type' => 'string' ),
+						'modified' => array( 'type' => 'string' ),
+						'link'     => array( 'type' => 'string' ),
+					),
+				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
-				'meta'                => array(
-					'mcp' => array( 'public' => true ),
-				),
+				'show_in_rest'        => true,
 			)
 		);
 	}

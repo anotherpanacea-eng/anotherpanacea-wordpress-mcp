@@ -25,11 +25,21 @@ class APMCP_List_Tags {
 						),
 					),
 				),
+				'output_schema'       => array(
+					'type'  => 'array',
+					'items' => array(
+						'type'       => 'object',
+						'properties' => array(
+							'id'   => array( 'type' => 'integer' ),
+							'name' => array( 'type' => 'string' ),
+							'slug' => array( 'type' => 'string' ),
+							'count' => array( 'type' => 'integer' ),
+						),
+					),
+				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
-				'meta'                => array(
-					'mcp' => array( 'public' => true ),
-				),
+				'show_in_rest'        => true,
 			)
 		);
 	}
