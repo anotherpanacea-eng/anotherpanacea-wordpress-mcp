@@ -359,9 +359,9 @@ class APMCP_Audit_Log {
 
 		// Fetch rows.
 		$query_params   = array_merge( $params, array( $per_page, $offset ) );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 		$rows = $wpdb->get_results(
 			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 				"SELECT id, timestamp, user_id, ability_name, post_id, before_status, after_status, request_id FROM {$table} WHERE {$where_clause} ORDER BY id DESC LIMIT %d OFFSET %d",
 				$query_params
 			),

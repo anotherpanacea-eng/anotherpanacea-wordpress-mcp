@@ -49,9 +49,9 @@ class APMCP_List_Revisions {
 					'properties' => array(
 						'post_id'   => array( 'type' => 'integer' ),
 						'revisions' => array(
-						'type'  => 'array',
-						'items' => array( 'type' => 'object' ),
-					),
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
+						),
 						'total'     => array( 'type' => 'integer' ),
 					),
 				),

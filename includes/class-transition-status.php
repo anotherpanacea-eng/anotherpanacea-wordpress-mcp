@@ -121,9 +121,9 @@ class APMCP_Transition_Status {
 					'conflict',
 					'Post was modified since you last read it.',
 					array(
-					'status'             => 409,
-					'actual_modified_gmt' => $actual,
-				)
+						'status'             => 409,
+						'actual_modified_gmt' => $actual,
+					)
 				);
 			}
 		}

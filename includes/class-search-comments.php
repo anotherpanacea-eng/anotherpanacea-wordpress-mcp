@@ -66,9 +66,9 @@ class APMCP_Search_Comments {
 					'type'       => 'object',
 					'properties' => array(
 						'comments'    => array(
-						'type'  => 'array',
-						'items' => array( 'type' => 'object' ),
-					),
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
+						),
 						'total'       => array( 'type' => 'integer' ),
 						'page'        => array( 'type' => 'integer' ),
 						'total_pages' => array( 'type' => 'integer' ),
