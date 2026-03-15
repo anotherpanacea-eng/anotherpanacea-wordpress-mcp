@@ -278,7 +278,6 @@ class APMCP_Audit_Log {
 				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
-				'show_in_rest'        => true,
 				'meta'                => array( 'mcp' => array( 'public' => true ) ),
 			)
 		);

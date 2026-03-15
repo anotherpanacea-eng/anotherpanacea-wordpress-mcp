@@ -168,7 +168,6 @@ class APMCP_Server_Segmentation {
 					),
 					'execute_callback'    => array( __CLASS__, "discover_{$surface}" ),
 					'permission_callback' => array( __CLASS__, 'check_permissions' ),
-					'show_in_rest'        => true,
 					'meta'                => array(
 						'annotations' => array(
 							'readonly'    => true,
@@ -218,7 +217,6 @@ class APMCP_Server_Segmentation {
 					),
 					'execute_callback'    => array( __CLASS__, "execute_{$surface}" ),
 					'permission_callback' => array( __CLASS__, 'check_permissions' ),
-					'show_in_rest'        => true,
 					'meta'                => array(
 						'annotations' => array(
 							'readonly'    => false,
