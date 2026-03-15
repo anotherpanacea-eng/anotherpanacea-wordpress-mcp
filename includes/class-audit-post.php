@@ -179,7 +179,7 @@ class APMCP_Audit_Post {
 		// 5. Check for uncategorized-only.
 		if ( 'post' === $post->post_type ) {
 			$cats = wp_get_post_categories( $post->ID, array( 'fields' => 'slugs' ) );
-			if ( empty( $cats ) || ( count( $cats ) === 1 && 'uncategorized' === $cats[0] ) ) {
+			if ( empty( $cats ) || ( 1 === count( $cats ) && 'uncategorized' === $cats[0] ) ) {
 				$issues[] = array(
 					'type'         => 'missing_categories',
 					'severity'     => 'medium',
@@ -235,7 +235,7 @@ class APMCP_Audit_Post {
 		foreach ( $images as $img_url ) {
 			// Only check internal images — external ones are covered by link checking.
 			$site_url = get_site_url();
-			if ( strpos( $img_url, $site_url ) === 0 ) {
+			if ( 0 === strpos( $img_url, $site_url ) ) {
 				$path = str_replace( $site_url, ABSPATH, $img_url );
 				$path = str_replace( '/wp-content/', 'wp-content/', $path );
 				// Just check if the attachment exists in the DB.
@@ -263,7 +263,7 @@ class APMCP_Audit_Post {
 
 			foreach ( $all_links as $url ) {
 				// Skip internal links, mailto, tel, anchors.
-				if ( strpos( $url, $site_url ) === 0 ) {
+				if ( 0 === strpos( $url, $site_url ) ) {
 					continue;
 				}
 				if ( preg_match( '/^(mailto:|tel:|#|javascript:)/i', $url ) ) {
@@ -370,7 +370,7 @@ class APMCP_Audit_Post {
 		$links = array();
 		if ( preg_match_all( '/https?:\/\/[^\s"\'<>]+/i', $content, $matches ) ) {
 			foreach ( $matches[0] as $url ) {
-				if ( strpos( $url, 'http://' ) === 0 ) {
+				if ( 0 === strpos( $url, 'http://' ) ) {
 					$links[] = $url;
 				}
 			}

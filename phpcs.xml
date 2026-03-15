@@ -18,6 +18,31 @@
         <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
     </rule>
 
+    <!--
+        DOMDocument uses camelCase property names ($childNodes, $nodeType, etc.)
+        which are PHP built-in API — not something we can change.
+    -->
+    <rule ref="WordPress.NamingConventions.ValidVariableName">
+        <properties>
+            <property name="allowed_custom_properties" type="array">
+                <element value="childNodes"/>
+                <element value="nodeType"/>
+                <element value="nodeName"/>
+                <element value="textContent"/>
+                <element value="tagName"/>
+                <element value="parentNode"/>
+                <element value="ownerDocument"/>
+                <element value="documentElement"/>
+                <element value="firstChild"/>
+                <element value="lastChild"/>
+                <element value="nextSibling"/>
+                <element value="previousSibling"/>
+                <element value="nodeValue"/>
+                <element value="innerHTML"/>
+            </property>
+        </properties>
+    </rule>
+
     <!-- Minimum PHP version -->
     <config name="minimum_supported_wp_version" value="6.8"/>
     <config name="testVersion" value="7.4-"/>

@@ -34,7 +34,7 @@ class APMCP_Markdown_Converter {
 			'/<!-- wp:heading\s*(\{[^}]*\})?\s*-->\s*<h([1-6])[^>]*>(.*?)<\/h\2>\s*<!-- \/wp:heading -->/s',
 			function ( $m ) {
 				$level = (int) $m[2];
-				$text  = strip_tags( $m[3] );
+				$text  = wp_strip_all_tags( $m[3] );
 				return str_repeat( '#', $level ) . ' ' . trim( $text );
 			},
 			$md
@@ -46,7 +46,7 @@ class APMCP_Markdown_Converter {
 			function ( $m ) {
 				$url = $m[2];
 				// Try to get alt from image tag.
-				$alt = ! empty( $m[3] ) ? strip_tags( $m[3] ) : '';
+				$alt = ! empty( $m[3] ) ? wp_strip_all_tags( $m[3] ) : '';
 				return '![' . $alt . '](' . $url . ')';
 			},
 			$md
@@ -88,7 +88,7 @@ class APMCP_Markdown_Converter {
 				$inner = $m[2];
 				// Strip <p> tags and convert to lines.
 				$inner = preg_replace( '/<p[^>]*>(.*?)<\/p>/s', '$1', $inner );
-				$inner = strip_tags( $inner );
+				$inner = wp_strip_all_tags( $inner );
 				$lines = explode( "\n", trim( $inner ) );
 				return implode(
 					"\n",
@@ -436,7 +436,7 @@ class APMCP_Markdown_Converter {
 	 */
 	private static function dom_node_to_block( $node, $doc ) {
 		// Text nodes: wrap non-empty text in a paragraph.
-		if ( $node->nodeType === XML_TEXT_NODE ) {
+		if ( XML_TEXT_NODE === $node->nodeType ) {
 			$text = trim( $node->textContent );
 			if ( empty( $text ) ) {
 				return null;
@@ -454,7 +454,7 @@ class APMCP_Markdown_Converter {
 		}
 
 		// Only process element nodes.
-		if ( $node->nodeType !== XML_ELEMENT_NODE ) {
+		if ( XML_ELEMENT_NODE !== $node->nodeType ) {
 			return null;
 		}
 
@@ -491,7 +491,7 @@ class APMCP_Markdown_Converter {
 			case 'blockquote':
 				$inner = self::get_inner_html( $node, $doc );
 				// Ensure content is wrapped in <p> tags if not already.
-				if ( strpos( $inner, '<p' ) === false ) {
+				if ( false === strpos( $inner, '<p' ) ) {
 					$inner = '<p>' . trim( $inner ) . '</p>';
 				}
 				return "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\">{$inner}</blockquote>\n<!-- /wp:quote -->";
@@ -514,7 +514,7 @@ class APMCP_Markdown_Converter {
 			case 'figure':
 				// Already a figure — likely from newer content. Wrap as image block.
 				$outer = self::get_outer_html( $node, $doc );
-				if ( strpos( $outer, '<img' ) !== false ) {
+				if ( false !== strpos( $outer, '<img' ) ) {
 					return "<!-- wp:image -->\n{$outer}\n<!-- /wp:image -->";
 				}
 				return "<!-- wp:paragraph -->\n<p>{$outer}</p>\n<!-- /wp:paragraph -->";
@@ -630,7 +630,7 @@ class APMCP_Markdown_Converter {
 			$html
 		);
 		// Strip remaining tags.
-		$html = strip_tags( $html );
+		$html = wp_strip_all_tags( $html );
 		return $html;
 	}
 
@@ -672,7 +672,7 @@ class APMCP_Markdown_Converter {
 		preg_match_all( '/<li[^>]*>(.*?)<\/li>/s', $html, $matches );
 		$counter = 1;
 		foreach ( $matches[1] as $item ) {
-			$text = self::inline_html_to_markdown( strip_tags( $item, '<strong><em><code><a>' ) );
+			$text = self::inline_html_to_markdown( wp_kses( $item, array( 'strong' => array(), 'em' => array(), 'code' => array(), 'a' => array( 'href' => array() ) ) ) );
 			$text = trim( $text );
 			if ( $ordered ) {
 				$items[] = "{$counter}. {$text}";

@@ -136,6 +136,7 @@ class APMCP_Server_Segmentation {
 			wp_register_ability(
 				"anotherpanacea-mcp/discover-{$surface}",
 				array(
+					// translators: %s is the surface name (e.g. Reader, Editorial, Full).
 					'label'               => sprintf( __( 'Discover %s abilities', 'anotherpanacea-mcp' ), ucfirst( $surface ) ),
 					'description'         => sprintf(
 						/* translators: 1: surface name, 2: surface description. */
@@ -182,6 +183,7 @@ class APMCP_Server_Segmentation {
 			wp_register_ability(
 				"anotherpanacea-mcp/execute-{$surface}",
 				array(
+					// translators: %s is the surface name (e.g. Reader, Editorial, Full).
 					'label'               => sprintf( __( 'Execute %s ability', 'anotherpanacea-mcp' ), ucfirst( $surface ) ),
 					'description'         => sprintf(
 						/* translators: 1: surface name, 2: surface description. */
