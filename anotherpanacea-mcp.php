@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AnotherPanacea MCP
  * Description: Registers MCP abilities for content management via the WordPress Abilities API and MCP Adapter.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      Joshua Miller
  * License:     GPL-2.0-or-later
  * Requires at least: 6.8
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APMCP_VERSION', '1.1.0' );
+define( 'APMCP_VERSION', '1.1.1' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
