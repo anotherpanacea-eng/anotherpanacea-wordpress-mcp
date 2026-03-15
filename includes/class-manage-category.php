@@ -231,7 +231,7 @@ class APMCP_Manage_Category {
 			return new WP_Error( 'not_found', 'Category not found.', array( 'status' => 404 ) );
 		}
 
-		if ( $term_id === (int) get_option( 'default_category' ) ) {
+		if ( (int) get_option( 'default_category' ) === $term_id ) {
 			return new WP_Error( 'default_category', 'Cannot delete the default category.', array( 'status' => 400 ) );
 		}
 

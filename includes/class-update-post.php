@@ -140,9 +140,9 @@ class APMCP_Update_Post {
 					'conflict',
 					'Post was modified since you last read it.',
 					array(
-					'status'             => 409,
-					'actual_modified_gmt' => $actual,
-				)
+						'status'             => 409,
+						'actual_modified_gmt' => $actual,
+					)
 				);
 			}
 		}
@@ -187,7 +187,11 @@ class APMCP_Update_Post {
 			);
 			if ( isset( $input['slug'] ) ) {
 				$preview['resolved_slug'] = wp_unique_post_slug(
-					sanitize_title( $input['slug'] ), $id, $post->post_status, $post->post_type, $post->post_parent
+					sanitize_title( $input['slug'] ),
+					$id,
+					$post->post_status,
+					$post->post_type,
+					$post->post_parent
 				);
 			}
 			if ( isset( $input['categories'] ) ) {
