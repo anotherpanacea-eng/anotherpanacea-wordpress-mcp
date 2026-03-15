@@ -24,6 +24,10 @@ class APMCP_Delete_Post {
 							'type'        => 'integer',
 							'description' => 'Post ID to trash.',
 						),
+						'expected_modified_gmt' => array(
+							'type'        => 'string',
+							'description' => 'ISO 8601 timestamp of last known modification. Rejects the delete if the post was modified since.',
+						),
 					),
 				),
 				'output_schema'       => array(
@@ -54,12 +58,24 @@ class APMCP_Delete_Post {
 		$id    = (int) ( $input['id'] ?? 0 );
 
 		$post = get_post( $id );
-		if ( ! $post || 'post' !== $post->post_type ) {
+		if ( ! $post || ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
 		}
 
 		if ( ! current_user_can( 'delete_post', $id ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to delete this post.', array( 'status' => 403 ) );
+		}
+
+		// Concurrency guard.
+		if ( ! empty( $input['expected_modified_gmt'] ) ) {
+			$actual = mysql2date( 'c', $post->post_modified_gmt );
+			if ( $actual !== $input['expected_modified_gmt'] ) {
+				return new WP_Error(
+					'conflict',
+					'Post was modified since you last read it.',
+					array( 'status' => 409, 'actual_modified_gmt' => $actual )
+				);
+			}
 		}
 
 		$result = wp_trash_post( $id );

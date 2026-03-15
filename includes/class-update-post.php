@@ -60,6 +60,14 @@ class APMCP_Update_Post {
 							'type'        => 'integer',
 							'description' => 'Media ID for featured image.',
 						),
+						'expected_modified_gmt' => array(
+							'type'        => 'string',
+							'description' => 'ISO 8601 timestamp of last known modification. If provided and the post has been modified since, the update is rejected with a conflict error.',
+						),
+						'dry_run' => array(
+							'type'        => 'boolean',
+							'description' => 'If true, validate the update without applying changes. Returns what would change.',
+						),
 					),
 				),
 				'output_schema'       => array(
@@ -71,6 +79,8 @@ class APMCP_Update_Post {
 						'status'   => array( 'type' => 'string' ),
 						'modified' => array( 'type' => 'string' ),
 						'link'     => array( 'type' => 'string' ),
+						'dry_run'  => array( 'type' => 'boolean' ),
+						'conflict_detected' => array( 'type' => 'boolean' ),
 					),
 				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
@@ -93,12 +103,24 @@ class APMCP_Update_Post {
 		$id    = (int) ( $input['id'] ?? 0 );
 
 		$post = get_post( $id );
-		if ( ! $post || 'post' !== $post->post_type ) {
+		if ( ! $post || ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
 		}
 
 		if ( ! current_user_can( 'edit_post', $id ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', array( 'status' => 403 ) );
+		}
+
+		// Concurrency guard.
+		if ( ! empty( $input['expected_modified_gmt'] ) ) {
+			$actual = mysql2date( 'c', $post->post_modified_gmt );
+			if ( $actual !== $input['expected_modified_gmt'] ) {
+				return new WP_Error(
+					'conflict',
+					'Post was modified since you last read it.',
+					array( 'status' => 409, 'actual_modified_gmt' => $actual )
+				);
+			}
 		}
 
 		$post_data = array( 'ID' => $id );
@@ -122,6 +144,24 @@ class APMCP_Update_Post {
 
 		if ( isset( $input['slug'] ) ) {
 			$post_data['post_name'] = sanitize_title( $input['slug'] );
+		}
+
+		// Dry-run: validate and return preview without mutating.
+		if ( ! empty( $input['dry_run'] ) ) {
+			$preview = array(
+				'dry_run'        => true,
+				'id'             => $id,
+				'fields_changed' => array_keys( array_diff_key( $post_data, array( 'ID' => true ) ) ),
+			);
+			if ( isset( $input['slug'] ) ) {
+				$preview['resolved_slug'] = wp_unique_post_slug(
+					sanitize_title( $input['slug'] ), $id, $post->post_status, $post->post_type, $post->post_parent
+				);
+			}
+			if ( isset( $input['categories'] ) ) {
+				$preview['resolved_categories'] = self::resolve_categories( $input['categories'] );
+			}
+			return $preview;
 		}
 
 		$result = wp_update_post( $post_data, true );

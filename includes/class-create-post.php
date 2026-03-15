@@ -20,6 +20,11 @@ class APMCP_Create_Post {
 					'type'       => 'object',
 					'required'   => array( 'title', 'content' ),
 					'properties' => array(
+						'post_type'      => array(
+							'type'        => 'string',
+							'description' => 'Content type to create: post or page. Default post.',
+							'enum'        => array( 'post', 'page' ),
+						),
 						'title'          => array(
 							'type'        => 'string',
 							'description' => 'Post title.',
@@ -64,6 +69,10 @@ class APMCP_Create_Post {
 							'type'        => 'integer',
 							'description' => 'Media ID for featured image.',
 						),
+						'dry_run' => array(
+							'type'        => 'boolean',
+							'description' => 'If true, validate the post data without creating it. Returns resolved slug, categories, and any issues.',
+						),
 					),
 				),
 				'output_schema'       => array(
@@ -85,15 +94,18 @@ class APMCP_Create_Post {
 	}
 
 	public static function check_permissions( $input = null ) {
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			return new WP_Error( 'forbidden', 'You do not have permission to create posts.', array( 'status' => 403 ) );
+		$post_type   = $input['post_type'] ?? 'post';
+		$edit_cap    = 'page' === $post_type ? 'edit_pages' : 'edit_posts';
+		$publish_cap = 'page' === $post_type ? 'publish_pages' : 'publish_posts';
+		if ( ! current_user_can( $edit_cap ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to create this content type.', array( 'status' => 403 ) );
 		}
 		$status = $input['status'] ?? 'draft';
-		if ( 'publish' === $status && ! current_user_can( 'publish_posts' ) ) {
-			return new WP_Error( 'forbidden', 'You do not have permission to publish posts.', array( 'status' => 403 ) );
+		if ( 'publish' === $status && ! current_user_can( $publish_cap ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to publish this content type.', array( 'status' => 403 ) );
 		}
-		if ( 'private' === $status && ! current_user_can( 'publish_posts' ) ) {
-			return new WP_Error( 'forbidden', 'You do not have permission to create private posts.', array( 'status' => 403 ) );
+		if ( 'private' === $status && ! current_user_can( $publish_cap ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to create private content.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
@@ -113,7 +125,7 @@ class APMCP_Create_Post {
 			'post_title'   => sanitize_text_field( $input['title'] ),
 			'post_content' => $content,
 			'post_status'  => $input['status'] ?? 'draft',
-			'post_type'    => 'post',
+			'post_type'    => $input['post_type'] ?? 'post',
 		);
 
 		if ( ! empty( $input['excerpt'] ) ) {
@@ -127,6 +139,22 @@ class APMCP_Create_Post {
 		if ( ! empty( $input['date'] ) ) {
 			$post_data['post_date']     = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', strtotime( $input['date'] ) ) );
 			$post_data['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', strtotime( $input['date'] ) );
+		}
+
+		// Dry-run: validate and return preview without creating.
+		if ( ! empty( $input['dry_run'] ) ) {
+			$preview = array(
+				'dry_run'        => true,
+				'resolved_slug'  => wp_unique_post_slug(
+					$post_data['post_name'] ?? sanitize_title( $post_data['post_title'] ),
+					0, $post_data['post_status'], $post_data['post_type'] ?? 'post', 0
+				),
+				'status'         => $post_data['post_status'],
+			);
+			if ( ! empty( $input['categories'] ) ) {
+				$preview['resolved_categories'] = self::resolve_categories( $input['categories'] );
+			}
+			return $preview;
 		}
 
 		$post_id = wp_insert_post( $post_data, true );

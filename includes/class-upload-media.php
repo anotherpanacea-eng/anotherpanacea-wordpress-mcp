@@ -9,6 +9,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class APMCP_Upload_Media {
 
+	/**
+	 * MIME types allowed for upload.
+	 *
+	 * @var string[]
+	 */
+	const ALLOWED_MIME_TYPES = array(
+		'image/jpeg',
+		'image/png',
+		'image/gif',
+		'image/webp',
+		'image/svg+xml',
+		'application/pdf',
+	);
+
+	/**
+	 * Maximum allowed file size in bytes (10 MB).
+	 *
+	 * @var int
+	 */
+	const MAX_FILE_SIZE = 10485760; // 10 * 1024 * 1024
+
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/upload-media',
@@ -39,6 +60,10 @@ class APMCP_Upload_Media {
 						'caption'     => array(
 							'type'        => 'string',
 							'description' => 'Caption for the media.',
+						),
+						'strip_exif'  => array(
+							'type'        => 'boolean',
+							'description' => 'If true, strip EXIF metadata from JPEG images. Default true.',
 						),
 					),
 				),
@@ -81,6 +106,19 @@ class APMCP_Upload_Media {
 		$tmp_file = null;
 
 		if ( ! empty( $input['file_url'] ) ) {
+			// Hostname allowlist check (optional — site owners may restrict via filter).
+			$allowed_hosts = apply_filters( 'apmcp_upload_allowed_hosts', array() );
+			if ( ! empty( $allowed_hosts ) ) {
+				$parsed_host = wp_parse_url( $input['file_url'], PHP_URL_HOST );
+				if ( ! in_array( $parsed_host, $allowed_hosts, true ) ) {
+					return new WP_Error(
+						'disallowed_host',
+						sprintf( 'The host "%s" is not in the allowed hosts list.', $parsed_host ),
+						array( 'status' => 403 )
+					);
+				}
+			}
+
 			// Download from URL.
 			$tmp_file = download_url( $input['file_url'] );
 			if ( is_wp_error( $tmp_file ) ) {
@@ -98,6 +136,39 @@ class APMCP_Upload_Media {
 			return new WP_Error( 'missing_file', 'One of file_url or file_base64 is required.', array( 'status' => 400 ) );
 		}
 
+		// File size check: reject files larger than MAX_FILE_SIZE.
+		$file_size = filesize( $tmp_file );
+		if ( false === $file_size || $file_size > self::MAX_FILE_SIZE ) {
+			@unlink( $tmp_file );
+			return new WP_Error(
+				'file_too_large',
+				sprintf( 'File size exceeds the maximum allowed size of %d MB.', self::MAX_FILE_SIZE / 1048576 ),
+				array( 'status' => 400 )
+			);
+		}
+
+		// MIME type check: validate actual MIME type against allowlist.
+		$mime_check = wp_check_filetype_and_ext( $tmp_file, $filename );
+		$detected_mime = $mime_check['type'];
+
+		// Fall back to mime_content_type() if wp_check_filetype_and_ext() couldn't detect.
+		if ( empty( $detected_mime ) && function_exists( 'mime_content_type' ) ) {
+			$detected_mime = mime_content_type( $tmp_file );
+		}
+
+		if ( empty( $detected_mime ) || ! in_array( $detected_mime, self::ALLOWED_MIME_TYPES, true ) ) {
+			@unlink( $tmp_file );
+			return new WP_Error(
+				'disallowed_mime_type',
+				sprintf(
+					'MIME type "%s" is not allowed. Allowed types: %s.',
+					$detected_mime ?: 'unknown',
+					implode( ', ', self::ALLOWED_MIME_TYPES )
+				),
+				array( 'status' => 400 )
+			);
+		}
+
 		// Sideload the file into the media library.
 		$file_array = array(
 			'name'     => $filename,
@@ -109,6 +180,20 @@ class APMCP_Upload_Media {
 		if ( is_wp_error( $attachment_id ) ) {
 			@unlink( $tmp_file );
 			return $attachment_id;
+		}
+
+		// EXIF stripping: re-encode JPEG through WP image editor to remove EXIF metadata.
+		// Default: strip unless explicitly set to false.
+		$strip_exif = isset( $input['strip_exif'] ) ? (bool) $input['strip_exif'] : true;
+		if ( $strip_exif && 'image/jpeg' === $detected_mime ) {
+			$attached_file = get_attached_file( $attachment_id );
+			if ( $attached_file ) {
+				$editor = wp_get_image_editor( $attached_file );
+				if ( ! is_wp_error( $editor ) ) {
+					// save() re-encodes the image through the editor, stripping EXIF.
+					$editor->save( $attached_file );
+				}
+			}
 		}
 
 		// Set alt text.

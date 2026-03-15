@@ -34,6 +34,14 @@ class APMCP_Transition_Status {
 							'type'        => 'string',
 							'description' => 'ISO 8601 date. For scheduling, set status to publish with a future date.',
 						),
+						'expected_modified_gmt' => array(
+							'type'        => 'string',
+							'description' => 'ISO 8601 timestamp of last known modification. Rejects the transition if the post was modified since.',
+						),
+						'dry_run' => array(
+							'type'        => 'boolean',
+							'description' => 'If true, validate the transition without applying it. Returns resulting status.',
+						),
 					),
 				),
 				'output_schema'       => array(
@@ -60,8 +68,12 @@ class APMCP_Transition_Status {
 		}
 		// Publishing and private both require publish_posts capability.
 		$status = $input['status'] ?? '';
-		if ( in_array( $status, array( 'publish', 'private' ), true ) && ! current_user_can( 'publish_posts' ) ) {
-			return new WP_Error( 'forbidden', 'You do not have permission to publish or make posts private.', array( 'status' => 403 ) );
+		if ( in_array( $status, array( 'publish', 'private' ), true ) ) {
+			// We can't know the post type from just the ID in the permission callback,
+			// so check both capabilities — the per-post check in execute() is the real gate.
+			if ( ! current_user_can( 'publish_posts' ) && ! current_user_can( 'publish_pages' ) ) {
+				return new WP_Error( 'forbidden', 'You do not have permission to publish or make content private.', array( 'status' => 403 ) );
+			}
 		}
 		return true;
 	}
@@ -71,12 +83,24 @@ class APMCP_Transition_Status {
 		$id    = (int) ( $input['id'] ?? 0 );
 
 		$post = get_post( $id );
-		if ( ! $post || 'post' !== $post->post_type ) {
+		if ( ! $post || ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
 		}
 
 		if ( ! current_user_can( 'edit_post', $id ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', array( 'status' => 403 ) );
+		}
+
+		// Concurrency guard.
+		if ( ! empty( $input['expected_modified_gmt'] ) ) {
+			$actual = mysql2date( 'c', $post->post_modified_gmt );
+			if ( $actual !== $input['expected_modified_gmt'] ) {
+				return new WP_Error(
+					'conflict',
+					'Post was modified since you last read it.',
+					array( 'status' => 409, 'actual_modified_gmt' => $actual )
+				);
+			}
 		}
 
 		$post_data = array(
@@ -94,6 +118,16 @@ class APMCP_Transition_Status {
 			if ( 'publish' === $input['status'] && $timestamp > time() ) {
 				$post_data['post_status'] = 'future';
 			}
+		}
+
+		// Dry-run: validate and return preview.
+		if ( ! empty( $input['dry_run'] ) ) {
+			return array(
+				'dry_run'         => true,
+				'id'              => $id,
+				'current_status'  => $post->post_status,
+				'target_status'   => $post_data['post_status'],
+			);
 		}
 
 		$result = wp_update_post( $post_data, true );

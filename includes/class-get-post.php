@@ -27,6 +27,11 @@ class APMCP_Get_Post {
 							'type'        => 'string',
 							'description' => 'Post slug.',
 						),
+						'post_type' => array(
+							'type'        => 'string',
+							'description' => 'Post type: post or page. Default: auto-detect from ID/slug.',
+							'enum'        => array( 'post', 'page' ),
+						),
 					),
 				),
 				'output_schema'       => array(
@@ -40,6 +45,7 @@ class APMCP_Get_Post {
 						'content_raw'      => array( 'type' => 'string' ),
 						'categories'       => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
 						'tags'             => array( 'type' => 'array', 'items' => array( 'type' => 'string' ) ),
+						'preview_link'     => array( 'type' => 'string' ),
 					),
 				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
@@ -67,7 +73,7 @@ class APMCP_Get_Post {
 		} elseif ( ! empty( $input['slug'] ) ) {
 			$posts = get_posts( array(
 				'name'        => $input['slug'],
-				'post_type'   => 'post',
+				'post_type'   => ! empty( $input['post_type'] ) ? $input['post_type'] : array( 'post', 'page' ),
 				'post_status' => array( 'draft', 'publish', 'pending', 'private' ),
 				'numberposts' => 1,
 			) );
@@ -76,7 +82,7 @@ class APMCP_Get_Post {
 			return new WP_Error( 'missing_param', 'Either id or slug is required.', array( 'status' => 400 ) );
 		}
 
-		if ( ! $post || 'post' !== $post->post_type ) {
+		if ( ! $post || ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
 		}
 
@@ -106,6 +112,7 @@ class APMCP_Get_Post {
 			'featured_media_id'  => $featured_id ?: null,
 			'featured_media_url' => $featured_url,
 			'link'               => get_permalink( $post->ID ),
+			'preview_link'       => get_preview_post_link( $post->ID ),
 		);
 	}
 }

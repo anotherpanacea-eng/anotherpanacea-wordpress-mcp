@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AnotherPanacea MCP
  * Description: Registers MCP abilities for content management via the WordPress Abilities API and MCP Adapter.
- * Version:     1.1.1
+ * Version:     1.3.0
  * Author:      Joshua Miller
  * License:     GPL-2.0-or-later
  * Requires at least: 6.8
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APMCP_VERSION', '1.1.1' );
+define( 'APMCP_VERSION', '1.3.0' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
@@ -49,12 +49,33 @@ require_once APMCP_DIR . 'includes/class-update-post.php';
 require_once APMCP_DIR . 'includes/class-transition-status.php';
 require_once APMCP_DIR . 'includes/class-upload-media.php';
 require_once APMCP_DIR . 'includes/class-delete-post.php';
+require_once APMCP_DIR . 'includes/class-list-revisions.php';
+require_once APMCP_DIR . 'includes/class-search-media.php';
+require_once APMCP_DIR . 'includes/class-update-media.php';
+require_once APMCP_DIR . 'includes/class-audit-log.php';
+require_once APMCP_DIR . 'includes/class-resource-taxonomy-map.php';
+require_once APMCP_DIR . 'includes/class-resource-recent-drafts.php';
+require_once APMCP_DIR . 'includes/class-resource-site-info.php';
+require_once APMCP_DIR . 'includes/class-prompt-draft-post.php';
+require_once APMCP_DIR . 'includes/class-prompt-review-post.php';
+require_once APMCP_DIR . 'includes/class-search-comments.php';
+require_once APMCP_DIR . 'includes/class-create-comment.php';
+require_once APMCP_DIR . 'includes/class-update-comment.php';
+require_once APMCP_DIR . 'includes/class-delete-comment.php';
+require_once APMCP_DIR . 'includes/class-manage-category.php';
+require_once APMCP_DIR . 'includes/class-manage-tag.php';
+require_once APMCP_DIR . 'includes/class-get-blocks.php';
+require_once APMCP_DIR . 'includes/class-update-blocks.php';
 
 /**
  * Register the ability category and all abilities.
  */
 add_action( 'wp_abilities_api_categories_init', 'apmcp_register_category' );
 add_action( 'wp_abilities_api_init', 'apmcp_register_abilities' );
+
+// Audit log hooks and table creation.
+add_action( 'plugins_loaded', array( 'APMCP_Audit_Log', 'init' ) );
+register_activation_hook( __FILE__, array( 'APMCP_Audit_Log', 'create_table' ) );
 
 function apmcp_register_category() {
 	if ( function_exists( 'wp_register_ability_category' ) ) {
@@ -69,18 +90,47 @@ function apmcp_register_category() {
 }
 
 function apmcp_register_abilities() {
-	// Phase 1: Read-only abilities.
+	// Audit log ability.
+	APMCP_Audit_Log::register();
+
+	// Read-only abilities.
 	APMCP_Search_Posts::register();
 	APMCP_Get_Post::register();
 	APMCP_List_Categories::register();
 	APMCP_List_Tags::register();
+	APMCP_List_Revisions::register();
+	APMCP_Search_Media::register();
 
-	// Phase 2: Write abilities.
+	// Write abilities.
 	APMCP_Create_Post::register();
 	APMCP_Update_Post::register();
 	APMCP_Transition_Status::register();
 	APMCP_Upload_Media::register();
+	APMCP_Update_Media::register();
 	APMCP_Delete_Post::register();
+
+	// Comment abilities.
+	APMCP_Search_Comments::register();
+	APMCP_Create_Comment::register();
+	APMCP_Update_Comment::register();
+	APMCP_Delete_Comment::register();
+
+	// Taxonomy CRUD.
+	APMCP_Manage_Category::register();
+	APMCP_Manage_Tag::register();
+
+	// Block-level abilities.
+	APMCP_Get_Blocks::register();
+	APMCP_Update_Blocks::register();
+
+	// MCP resources.
+	APMCP_Resource_Taxonomy_Map::register();
+	APMCP_Resource_Recent_Drafts::register();
+	APMCP_Resource_Site_Info::register();
+
+	// MCP prompts.
+	APMCP_Prompt_Draft_Post::register();
+	APMCP_Prompt_Review_Post::register();
 }
 
 /**
