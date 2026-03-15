@@ -160,6 +160,42 @@ class APMCP_Markdown_Converter {
 			return '';
 		}
 
+		// Pre-process HTML <img> tags into Markdown image syntax before
+		// wp_kses strips them. Handles linked images (<a><img></a>) and
+		// standalone <img> tags from legacy (pre-Gutenberg) content.
+		$markdown = preg_replace_callback(
+			'/<a\s[^>]*href="([^"]*)"[^>]*>\s*<img\s[^>]*?\/?>\s*<\/a>/i',
+			function ( $m ) {
+				$link_url = $m[1];
+				// Extract src and alt from the img tag.
+				$src = '';
+				$alt = '';
+				if ( preg_match( '/src="([^"]*)"/', $m[0], $sm ) ) {
+					$src = $sm[1];
+				}
+				if ( preg_match( '/alt="([^"]*)"/', $m[0], $am ) ) {
+					$alt = $am[1];
+				}
+				return '![' . $alt . '](' . $src . ')';
+			},
+			$markdown
+		);
+		$markdown = preg_replace_callback(
+			'/<img\s[^>]*?\/?>/i',
+			function ( $m ) {
+				$src = '';
+				$alt = '';
+				if ( preg_match( '/src="([^"]*)"/', $m[0], $sm ) ) {
+					$src = $sm[1];
+				}
+				if ( preg_match( '/alt="([^"]*)"/', $m[0], $am ) ) {
+					$alt = $am[1];
+				}
+				return '![' . $alt . '](' . $src . ')';
+			},
+			$markdown
+		);
+
 		// Strip raw HTML tags that aren't part of Markdown syntax.
 		// Allow only the inline elements that inline_markdown_to_html produces,
 		// preventing callers from smuggling arbitrary HTML/block markup through
@@ -218,12 +254,23 @@ class APMCP_Markdown_Converter {
 				continue;
 			}
 
-			// Image.
+			// Image (standalone on its own line).
 			if ( preg_match( '/^!\[([^\]]*)\]\(([^)]+)\)$/', trim( $line ), $m ) ) {
 				$alt = esc_attr( $m[1] );
 				$url = esc_url( $m[2] );
 				$blocks[] = "<!-- wp:image -->\n<figure class=\"wp-block-image\"><img src=\"{$url}\" alt=\"{$alt}\"/></figure>\n<!-- /wp:image -->";
 				$i++;
+				continue;
+			}
+
+			// Image at start of line followed by text (legacy inline image).
+			// Split into an image block + the remaining text goes back on the line stack.
+			if ( preg_match( '/^!\[([^\]]*)\]\(([^)]+)\)\s*(.+)$/', trim( $line ), $m ) ) {
+				$alt = esc_attr( $m[1] );
+				$url = esc_url( $m[2] );
+				$blocks[] = "<!-- wp:image -->\n<figure class=\"wp-block-image\"><img src=\"{$url}\" alt=\"{$alt}\"/></figure>\n<!-- /wp:image -->";
+				// Replace current line with the remaining text so it gets processed next.
+				$lines[ $i ] = $m[3];
 				continue;
 			}
 
