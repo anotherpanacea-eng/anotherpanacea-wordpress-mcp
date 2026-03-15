@@ -1,14 +1,22 @@
 <?php
 /**
- * create-comment ability: Create a new comment on a post.
+ * Create-comment ability: Create a new comment on a post.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Creates a new comment on a post via the MCP abilities API.
+ */
 class APMCP_Create_Comment {
 
+	/**
+	 * Register the create-comment ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/create-comment',
@@ -66,13 +74,25 @@ class APMCP_Create_Comment {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the create-comment ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'moderate_comments' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to moderate comments.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the create-comment ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 

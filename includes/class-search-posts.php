@@ -1,14 +1,22 @@
 <?php
 /**
- * search-posts ability: Search and filter posts.
+ * Search-posts ability: Search and filter posts.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Searches and filters posts via the MCP abilities API.
+ */
 class APMCP_Search_Posts {
 
+	/**
+	 * Register the search-posts ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/search-posts',
@@ -84,6 +92,12 @@ class APMCP_Search_Posts {
 		);
 	}
 
+	/**
+	 * Check permissions for the search-posts ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return true|WP_Error
+	 */
 	public static function check_permissions( $input = null ) {
 		$post_type = $input['post_type'] ?? 'post';
 		$cap = 'page' === $post_type ? 'edit_pages' : 'edit_posts';
@@ -104,6 +118,12 @@ class APMCP_Search_Posts {
 		return true;
 	}
 
+	/**
+	 * Execute the search-posts ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = wp_parse_args( $input ?? array(), array(
 			'status'   => 'draft',

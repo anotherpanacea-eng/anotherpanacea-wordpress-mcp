@@ -12,6 +12,8 @@
  *   /mcp/full         — everything including destructive operations
  *
  * The default MCP Adapter server remains available for backward compatibility.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -223,15 +225,33 @@ class APMCP_Server_Segmentation {
 
 	// ── Discover callbacks ──────────────────────────────────────────────
 
-	public static function discover_reader( $input = null ) {
+	/**
+	 * Discover callback for the reader surface.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return array
+	 */
+	public static function discover_reader( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return self::discover( 'reader' );
 	}
 
-	public static function discover_editorial( $input = null ) {
+	/**
+	 * Discover callback for the editorial surface.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return array
+	 */
+	public static function discover_editorial( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return self::discover( 'editorial' );
 	}
 
-	public static function discover_full( $input = null ) {
+	/**
+	 * Discover callback for the full surface.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return array
+	 */
+	public static function discover_full( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return self::discover( 'full' );
 	}
 
@@ -277,14 +297,32 @@ class APMCP_Server_Segmentation {
 
 	// ── Execute callbacks ───────────────────────────────────────────────
 
+	/**
+	 * Execute callback for the reader surface.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array
+	 */
 	public static function execute_reader( $input = null ) {
 		return self::execute_surface( 'reader', $input );
 	}
 
+	/**
+	 * Execute callback for the editorial surface.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array
+	 */
 	public static function execute_editorial( $input = null ) {
 		return self::execute_surface( 'editorial', $input );
 	}
 
+	/**
+	 * Execute callback for the full surface.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array
+	 */
 	public static function execute_full( $input = null ) {
 		return self::execute_surface( 'full', $input );
 	}

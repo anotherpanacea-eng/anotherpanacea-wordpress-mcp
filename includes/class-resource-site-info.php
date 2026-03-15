@@ -1,14 +1,22 @@
 <?php
 /**
- * resource-site-info ability: exposes basic site information as an MCP resource.
+ * Resource-site-info ability: Exposes basic site information as an MCP resource.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Exposes basic site information as an MCP resource via the abilities API.
+ */
 class APMCP_Resource_Site_Info {
 
+	/**
+	 * Register the resource-site-info ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/resource-site-info',
@@ -50,13 +58,25 @@ class APMCP_Resource_Site_Info {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the resource-site-info ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to view site info.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the resource-site-info ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		global $wp_version;
 

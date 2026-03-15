@@ -1,14 +1,22 @@
 <?php
 /**
- * create-post ability: Create a new post (typically as draft).
+ * Create-post ability: Create a new post (typically as draft).
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Creates a new post via the MCP abilities API.
+ */
 class APMCP_Create_Post {
 
+	/**
+	 * Register the create-post ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/create-post',
@@ -93,6 +101,12 @@ class APMCP_Create_Post {
 		);
 	}
 
+	/**
+	 * Check permissions for the create-post ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return true|WP_Error
+	 */
 	public static function check_permissions( $input = null ) {
 		$post_type   = $input['post_type'] ?? 'post';
 		$edit_cap    = 'page' === $post_type ? 'edit_pages' : 'edit_posts';
@@ -110,6 +124,12 @@ class APMCP_Create_Post {
 		return true;
 	}
 
+	/**
+	 * Execute the create-post ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input  = $input ?? array();
 		$format = $input['format'] ?? 'markdown';

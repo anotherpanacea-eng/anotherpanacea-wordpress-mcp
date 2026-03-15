@@ -1,14 +1,22 @@
 <?php
 /**
- * update-comment ability: Update comment content or status.
+ * Update-comment ability: Update comment content or status.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Updates comment content or status via the MCP abilities API.
+ */
 class APMCP_Update_Comment {
 
+	/**
+	 * Register the update-comment ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/update-comment',
@@ -55,13 +63,25 @@ class APMCP_Update_Comment {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the update-comment ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'moderate_comments' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to moderate comments.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the update-comment ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input      = $input ?? array();
 		$comment_id = (int) ( $input['comment_id'] ?? 0 );

@@ -1,14 +1,22 @@
 <?php
 /**
- * get-blocks ability: Parse a post's content into constituent Gutenberg blocks.
+ * Get-blocks ability: Parse a post's content into constituent Gutenberg blocks.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Parses a post's content into Gutenberg blocks via the MCP abilities API.
+ */
 class APMCP_Get_Blocks {
 
+	/**
+	 * Register the get-blocks ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/get-blocks',
@@ -62,6 +70,12 @@ class APMCP_Get_Blocks {
 		);
 	}
 
+	/**
+	 * Check permissions for the get-blocks ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return true|WP_Error
+	 */
 	public static function check_permissions( $input = null ) {
 		$post_id = (int) ( $input['post_id'] ?? 0 );
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
@@ -70,6 +84,12 @@ class APMCP_Get_Blocks {
 		return true;
 	}
 
+	/**
+	 * Execute the get-blocks ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input   = $input ?? array();
 		$post_id = (int) ( $input['post_id'] ?? 0 );

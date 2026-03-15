@@ -8,12 +8,17 @@
  * action performed through the MCP abilities.
  *
  * Also registers a read-only `list-audit-log` ability for querying the log.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Audit log class: hooks into WP lifecycle events and provides a list-audit-log ability.
+ */
 class APMCP_Audit_Log {
 
 	/**
@@ -91,16 +96,17 @@ class APMCP_Audit_Log {
 			$request_id = sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_REQUEST_ID'] ) );
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 		$wpdb->insert(
 			$wpdb->prefix . self::TABLE_SUFFIX,
 			array(
-				'timestamp'    => current_time( 'mysql', true ), // UTC
-				'user_id'      => get_current_user_id(),
-				'ability_name' => $ability_name,
-				'post_id'      => (int) $post_id,
+				'timestamp'     => current_time( 'mysql', true ), // UTC.
+				'user_id'       => get_current_user_id(),
+				'ability_name'  => $ability_name,
+				'post_id'       => (int) $post_id,
 				'before_status' => $before_status,
 				'after_status'  => $after_status,
-				'request_id'   => $request_id,
+				'request_id'    => $request_id,
 			),
 			array( '%s', '%d', '%s', '%d', '%s', '%s', '%s' )
 		);
@@ -278,7 +284,13 @@ class APMCP_Audit_Log {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the list-audit-log ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'manage_options' ) && ! current_user_can( 'edit_others_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to view the audit log.', array( 'status' => 403 ) );
 		}

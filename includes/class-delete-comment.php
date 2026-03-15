@@ -1,14 +1,22 @@
 <?php
 /**
- * delete-comment ability: Delete or trash a comment.
+ * Delete-comment ability: delete or trash a comment.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Handles deleting or trashing comments via the MCP abilities API.
+ */
 class APMCP_Delete_Comment {
 
+	/**
+	 * Register the delete-comment ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/delete-comment',
@@ -46,13 +54,25 @@ class APMCP_Delete_Comment {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the delete-comment ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'moderate_comments' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to moderate comments.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the delete-comment ability.
+	 *
+	 * @param array|null $input Ability input with comment_id and optional force flag.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input      = $input ?? array();
 		$comment_id = (int) ( $input['comment_id'] ?? 0 );

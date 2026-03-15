@@ -1,14 +1,22 @@
 <?php
 /**
- * search-media ability: Search the WordPress media library.
+ * Search-media ability: Search the WordPress media library.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Searches the WordPress media library via the MCP abilities API.
+ */
 class APMCP_Search_Media {
 
+	/**
+	 * Register the search-media ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/search-media',
@@ -65,13 +73,25 @@ class APMCP_Search_Media {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the search-media ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to browse the media library.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the search-media ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = wp_parse_args( $input ?? array(), array(
 			'search'    => '',

@@ -1,15 +1,24 @@
 <?php
 /**
- * update-post ability: Partial update of an existing post.
+ * Update-post ability: Partial update of an existing post.
+ *
  * Does NOT change post status (use transition-post-status for that).
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Partially updates an existing post via the MCP abilities API.
+ */
 class APMCP_Update_Post {
 
+	/**
+	 * Register the update-post ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/update-post',
@@ -91,13 +100,25 @@ class APMCP_Update_Post {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the update-post ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to update posts.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the update-post ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 		$id    = (int) ( $input['id'] ?? 0 );
@@ -210,6 +231,12 @@ class APMCP_Update_Post {
 		);
 	}
 
+	/**
+	 * Resolve category slugs to IDs, creating categories that don't exist.
+	 *
+	 * @param array $slugs Category slugs.
+	 * @return int[] Category term IDs.
+	 */
 	private static function resolve_categories( $slugs ) {
 		$ids = array();
 		foreach ( $slugs as $slug ) {

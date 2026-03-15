@@ -1,14 +1,22 @@
 <?php
 /**
- * manage-tag ability: Create, update, or delete a tag.
+ * Manage-tag ability: Create, update, or delete a tag.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Creates, updates, or deletes tags via the MCP abilities API.
+ */
 class APMCP_Manage_Tag {
 
+	/**
+	 * Register the manage-tag ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/manage-tag',
@@ -63,13 +71,25 @@ class APMCP_Manage_Tag {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the manage-tag ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'manage_categories' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to manage tags.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the manage-tag ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input  = $input ?? array();
 		$action = $input['action'] ?? '';
@@ -86,6 +106,12 @@ class APMCP_Manage_Tag {
 		}
 	}
 
+	/**
+	 * Create a new tag.
+	 *
+	 * @param array $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	private static function create( $input ) {
 		if ( empty( $input['name'] ) ) {
 			return new WP_Error( 'missing_name', 'Tag name is required for create.', array( 'status' => 400 ) );
@@ -122,6 +148,12 @@ class APMCP_Manage_Tag {
 		);
 	}
 
+	/**
+	 * Update an existing tag.
+	 *
+	 * @param array $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	private static function update( $input ) {
 		if ( empty( $input['term_id'] ) ) {
 			return new WP_Error( 'missing_term_id', 'term_id is required for update.', array( 'status' => 400 ) );
@@ -168,6 +200,12 @@ class APMCP_Manage_Tag {
 		);
 	}
 
+	/**
+	 * Delete a tag.
+	 *
+	 * @param array $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	private static function delete( $input ) {
 		if ( empty( $input['term_id'] ) ) {
 			return new WP_Error( 'missing_term_id', 'term_id is required for delete.', array( 'status' => 400 ) );

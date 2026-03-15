@@ -1,14 +1,22 @@
 <?php
 /**
- * update-media ability: Update metadata for an existing media item.
+ * Update-media ability: Update metadata for an existing media item.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Updates metadata for a media item via the MCP abilities API.
+ */
 class APMCP_Update_Media {
 
+	/**
+	 * Register the update-media ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/update-media',
@@ -62,13 +70,25 @@ class APMCP_Update_Media {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the update-media ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to edit media.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the update-media ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 		$id    = (int) ( $input['id'] ?? 0 );

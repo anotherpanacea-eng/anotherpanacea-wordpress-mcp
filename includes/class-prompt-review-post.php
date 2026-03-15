@@ -1,14 +1,22 @@
 <?php
 /**
- * prompt-review-post ability: "Review a post before publishing" editorial review prompt.
+ * Prompt-review-post ability: "Review a post before publishing" editorial review prompt.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Returns a structured editorial review prompt for a post via the MCP abilities API.
+ */
 class APMCP_Prompt_Review_Post {
 
+	/**
+	 * Register the prompt-review-post ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/prompt-review-post',
@@ -61,13 +69,25 @@ class APMCP_Prompt_Review_Post {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the prompt-review-post ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to use this prompt.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the prompt-review-post ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input   = $input ?? array();
 		$post_id = isset( $input['post_id'] ) ? (int) $input['post_id'] : 0;

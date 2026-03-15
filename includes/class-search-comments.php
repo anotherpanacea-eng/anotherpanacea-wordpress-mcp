@@ -1,14 +1,22 @@
 <?php
 /**
- * search-comments ability: Search and filter comments.
+ * Search-comments ability: Search and filter comments.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Searches and filters comments via the MCP abilities API.
+ */
 class APMCP_Search_Comments {
 
+	/**
+	 * Register the search-comments ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/search-comments',
@@ -78,13 +86,25 @@ class APMCP_Search_Comments {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the search-comments ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'moderate_comments' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to moderate comments.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the search-comments ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = wp_parse_args( $input ?? array(), array(
 			'search'       => '',

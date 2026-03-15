@@ -1,14 +1,22 @@
 <?php
 /**
- * resource-taxonomy-map ability: exposes full category and tag taxonomy tree as an MCP resource.
+ * Resource-taxonomy-map ability: Exposes full category and tag taxonomy tree as an MCP resource.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Exposes the full taxonomy tree as an MCP resource via the abilities API.
+ */
 class APMCP_Resource_Taxonomy_Map {
 
+	/**
+	 * Register the resource-taxonomy-map ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/resource-taxonomy-map',
@@ -69,13 +77,25 @@ class APMCP_Resource_Taxonomy_Map {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the resource-taxonomy-map ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to view the taxonomy map.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the resource-taxonomy-map ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$category_terms = get_terms( array(
 			'taxonomy'   => 'category',

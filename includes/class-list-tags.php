@@ -1,14 +1,22 @@
 <?php
 /**
- * list-tags ability.
+ * List-tags ability: List all post tags.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Lists all post tags via the MCP abilities API.
+ */
 class APMCP_List_Tags {
 
+	/**
+	 * Register the list-tags ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/list-tags',
@@ -45,13 +53,25 @@ class APMCP_List_Tags {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the list-tags ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to list tags.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the list-tags ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 

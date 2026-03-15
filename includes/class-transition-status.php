@@ -1,15 +1,24 @@
 <?php
 /**
- * transition-post-status ability: Change a post's status.
+ * Transition-post-status ability: Change a post's status.
+ *
  * Separated from update-post because status transitions have side effects.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Changes a post's status via the MCP abilities API.
+ */
 class APMCP_Transition_Status {
 
+	/**
+	 * Register the transition-post-status ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/transition-post-status',
@@ -62,6 +71,12 @@ class APMCP_Transition_Status {
 		);
 	}
 
+	/**
+	 * Check permissions for the transition-post-status ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return true|WP_Error
+	 */
 	public static function check_permissions( $input = null ) {
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to change post status.', array( 'status' => 403 ) );
@@ -78,6 +93,12 @@ class APMCP_Transition_Status {
 		return true;
 	}
 
+	/**
+	 * Execute the transition-post-status ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 		$id    = (int) ( $input['id'] ?? 0 );

@@ -1,15 +1,20 @@
 <?php
 /**
- * audit-post ability: Read-only scan of a post for legacy issues.
+ * Audit-post ability: read-only scan of a post for legacy issues.
  *
  * Returns a structured report of issues that can be fixed mechanically
  * (by repair-post) or that require human/LLM judgment.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Read-only post audit: scans for legacy issues and returns a structured report.
+ */
 class APMCP_Audit_Post {
 
 	/**
@@ -17,6 +22,9 @@ class APMCP_Audit_Post {
 	 */
 	const DEPRECATED_TAGS = array( 'font', 'center', 'marquee', 'blink', 'strike', 'big', 'small', 'tt', 'u' );
 
+	/**
+	 * Register the audit-post ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/audit-post',
@@ -86,13 +94,25 @@ class APMCP_Audit_Post {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the audit-post ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to audit posts.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the audit-post ability.
+	 *
+	 * @param array|null $input Ability input with post ID and options.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 

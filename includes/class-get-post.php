@@ -1,14 +1,22 @@
 <?php
 /**
- * get-post ability: Retrieve full post content for reading/editing.
+ * Get-post ability: Retrieve full post content for reading/editing.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Retrieves full post content via the MCP abilities API.
+ */
 class APMCP_Get_Post {
 
+	/**
+	 * Register the get-post ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/get-post',
@@ -56,13 +64,25 @@ class APMCP_Get_Post {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the get-post ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to view posts.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the get-post ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 

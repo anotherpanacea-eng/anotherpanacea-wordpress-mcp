@@ -1,12 +1,17 @@
 <?php
 /**
- * Bidirectional Markdown ↔ Gutenberg block markup converter.
+ * Bidirectional Markdown / Gutenberg block markup converter.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Converts between Markdown and Gutenberg block markup in both directions.
+ */
 class APMCP_Markdown_Converter {
 
 	/**
@@ -578,6 +583,9 @@ class APMCP_Markdown_Converter {
 
 	/**
 	 * Convert inline HTML (strong, em, a, code) to Markdown equivalents.
+	 *
+	 * @param string $html HTML string with inline elements.
+	 * @return string Markdown string.
 	 */
 	public static function inline_html_to_markdown( $html ) {
 		// Bold.
@@ -601,6 +609,9 @@ class APMCP_Markdown_Converter {
 
 	/**
 	 * Convert inline Markdown (bold, italic, code, links) to HTML.
+	 *
+	 * @param string $text Markdown text with inline formatting.
+	 * @return string HTML string.
 	 */
 	public static function inline_markdown_to_html( $text ) {
 		// Inline code (must be before bold/italic to avoid conflicts).

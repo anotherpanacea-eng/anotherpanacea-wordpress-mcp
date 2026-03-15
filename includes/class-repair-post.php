@@ -1,16 +1,21 @@
 <?php
 /**
- * repair-post ability: Automated fixes for legacy post issues.
+ * Repair-post ability: automated fixes for legacy post issues.
  *
  * Takes a post ID and a list of repair operations to perform.
  * Only applies mechanical, deterministic fixes — no LLM judgment needed.
  * Supports dry_run mode to preview changes without writing.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Automated post repair: applies mechanical fixes to legacy content.
+ */
 class APMCP_Repair_Post {
 
 	/**
@@ -26,6 +31,9 @@ class APMCP_Repair_Post {
 		'strip-empty-tags'      => 'Remove empty HTML tags (<p></p>, <div></div>, etc.).',
 	);
 
+	/**
+	 * Register the repair-post ability.
+	 */
 	public static function register() {
 		// Build the enum list from operation keys.
 		$op_keys = array_keys( self::OPERATIONS );
@@ -102,13 +110,25 @@ class APMCP_Repair_Post {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the repair-post ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to repair posts.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the repair-post ability.
+	 *
+	 * @param array|null $input Ability input with post ID, operations, and options.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 

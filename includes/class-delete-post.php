@@ -1,14 +1,22 @@
 <?php
 /**
- * delete-post ability: Move a post to trash.
+ * Delete-post ability: Move a post to trash.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Moves a post to trash via the MCP abilities API.
+ */
 class APMCP_Delete_Post {
 
+	/**
+	 * Register the delete-post ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/delete-post',
@@ -46,13 +54,25 @@ class APMCP_Delete_Post {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the delete-post ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'delete_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to delete posts.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the delete-post ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 		$id    = (int) ( $input['id'] ?? 0 );

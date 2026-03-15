@@ -1,12 +1,17 @@
 <?php
 /**
- * upload-media ability: Upload an image to the media library.
+ * Upload-media ability: Upload an image to the media library.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Uploads media to the WordPress library via the MCP abilities API.
+ */
 class APMCP_Upload_Media {
 
 	/**
@@ -30,6 +35,9 @@ class APMCP_Upload_Media {
 	 */
 	const MAX_FILE_SIZE = 10485760; // 10 * 1024 * 1024
 
+	/**
+	 * Register the upload-media ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/upload-media',
@@ -85,13 +93,25 @@ class APMCP_Upload_Media {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the upload-media ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'upload_files' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to upload files.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the upload-media ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input = $input ?? array();
 

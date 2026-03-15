@@ -1,14 +1,22 @@
 <?php
 /**
- * list-revisions ability: List revisions for a post with optional diff.
+ * List-revisions ability: List revisions for a post with optional diff.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Lists revisions for a post with optional diff via the MCP abilities API.
+ */
 class APMCP_List_Revisions {
 
+	/**
+	 * Register the list-revisions ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/list-revisions',
@@ -52,13 +60,25 @@ class APMCP_List_Revisions {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the list-revisions ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'edit_posts' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to view revisions.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the list-revisions ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input   = $input ?? array();
 		$post_id = (int) ( $input['post_id'] ?? 0 );

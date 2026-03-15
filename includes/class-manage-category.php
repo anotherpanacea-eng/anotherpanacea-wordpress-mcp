@@ -1,14 +1,22 @@
 <?php
 /**
- * manage-category ability: Create, update, or delete a category.
+ * Manage-category ability: Create, update, or delete a category.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Creates, updates, or deletes categories via the MCP abilities API.
+ */
 class APMCP_Manage_Category {
 
+	/**
+	 * Register the manage-category ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/manage-category',
@@ -68,13 +76,25 @@ class APMCP_Manage_Category {
 		);
 	}
 
-	public static function check_permissions( $input = null ) {
+	/**
+	 * Check permissions for the manage-category ability.
+	 *
+	 * @param array|null $input Ability input (unused).
+	 * @return true|WP_Error
+	 */
+	public static function check_permissions( $input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		if ( ! current_user_can( 'manage_categories' ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to manage categories.', array( 'status' => 403 ) );
 		}
 		return true;
 	}
 
+	/**
+	 * Execute the manage-category ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input  = $input ?? array();
 		$action = $input['action'] ?? '';
@@ -91,6 +111,12 @@ class APMCP_Manage_Category {
 		}
 	}
 
+	/**
+	 * Create a new category.
+	 *
+	 * @param array $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	private static function create( $input ) {
 		if ( empty( $input['name'] ) ) {
 			return new WP_Error( 'missing_name', 'Category name is required for create.', array( 'status' => 400 ) );
@@ -131,6 +157,12 @@ class APMCP_Manage_Category {
 		);
 	}
 
+	/**
+	 * Update an existing category.
+	 *
+	 * @param array $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	private static function update( $input ) {
 		if ( empty( $input['term_id'] ) ) {
 			return new WP_Error( 'missing_term_id', 'term_id is required for update.', array( 'status' => 400 ) );
@@ -181,6 +213,12 @@ class APMCP_Manage_Category {
 		);
 	}
 
+	/**
+	 * Delete a category.
+	 *
+	 * @param array $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	private static function delete( $input ) {
 		if ( empty( $input['term_id'] ) ) {
 			return new WP_Error( 'missing_term_id', 'term_id is required for delete.', array( 'status' => 400 ) );

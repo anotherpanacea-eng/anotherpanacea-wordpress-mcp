@@ -1,14 +1,22 @@
 <?php
 /**
- * update-blocks ability: Update, insert, delete, or reorder individual blocks within a post.
+ * Update-blocks ability: Update, insert, delete, or reorder individual blocks within a post.
+ *
+ * @package AnotherPanacea_MCP
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+/**
+ * Updates individual Gutenberg blocks within a post via the MCP abilities API.
+ */
 class APMCP_Update_Blocks {
 
+	/**
+	 * Register the update-blocks ability.
+	 */
 	public static function register() {
 		wp_register_ability(
 			'anotherpanacea-mcp/update-blocks',
@@ -100,6 +108,12 @@ class APMCP_Update_Blocks {
 		);
 	}
 
+	/**
+	 * Check permissions for the update-blocks ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return true|WP_Error
+	 */
 	public static function check_permissions( $input = null ) {
 		$post_id = (int) ( $input['post_id'] ?? 0 );
 		if ( ! current_user_can( 'edit_post', $post_id ) ) {
@@ -108,6 +122,12 @@ class APMCP_Update_Blocks {
 		return true;
 	}
 
+	/**
+	 * Execute the update-blocks ability.
+	 *
+	 * @param array|null $input Ability input parameters.
+	 * @return array|WP_Error
+	 */
 	public static function execute( $input = null ) {
 		$input      = $input ?? array();
 		$post_id    = (int) ( $input['post_id'] ?? 0 );

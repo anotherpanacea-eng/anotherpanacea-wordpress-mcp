@@ -35,6 +35,8 @@ class AbilitiesRegisterTest extends WP_UnitTestCase {
 		'anotherpanacea-mcp/prompt-draft-post',
 		'anotherpanacea-mcp/prompt-review-post',
 		'anotherpanacea-mcp/list-audit-log',
+		'anotherpanacea-mcp/audit-post',
+		'anotherpanacea-mcp/repair-post',
 	);
 
 	public function test_all_abilities_registered() {
