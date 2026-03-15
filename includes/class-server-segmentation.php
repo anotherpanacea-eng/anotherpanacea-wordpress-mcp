@@ -32,6 +32,7 @@ class APMCP_Server_Segmentation {
 		'anotherpanacea-mcp/list-revisions',
 		'anotherpanacea-mcp/search-media',
 		'anotherpanacea-mcp/search-comments',
+		'anotherpanacea-mcp/audit-post',
 	);
 
 	/**
@@ -47,6 +48,7 @@ class APMCP_Server_Segmentation {
 		'anotherpanacea-mcp/manage-tag',
 		'anotherpanacea-mcp/upload-media',
 		'anotherpanacea-mcp/update-media',
+		'anotherpanacea-mcp/repair-post',
 	);
 
 	/**

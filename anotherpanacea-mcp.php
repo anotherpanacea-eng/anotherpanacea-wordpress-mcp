@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AnotherPanacea MCP
  * Description: Registers MCP abilities for content management via the WordPress Abilities API and MCP Adapter.
- * Version:     1.4.1
+ * Version:     1.5.0
  * Author:      Joshua Miller
  * License:     GPL-2.0-or-later
  * Requires at least: 6.8
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APMCP_VERSION', '1.4.1' );
+define( 'APMCP_VERSION', '1.5.0' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
@@ -66,6 +66,8 @@ require_once APMCP_DIR . 'includes/class-manage-category.php';
 require_once APMCP_DIR . 'includes/class-manage-tag.php';
 require_once APMCP_DIR . 'includes/class-get-blocks.php';
 require_once APMCP_DIR . 'includes/class-update-blocks.php';
+require_once APMCP_DIR . 'includes/class-audit-post.php';
+require_once APMCP_DIR . 'includes/class-repair-post.php';
 require_once APMCP_DIR . 'includes/class-server-segmentation.php';
 
 /**
@@ -126,6 +128,10 @@ function apmcp_register_abilities() {
 	// Block-level abilities.
 	APMCP_Get_Blocks::register();
 	APMCP_Update_Blocks::register();
+
+	// Audit & repair abilities.
+	APMCP_Audit_Post::register();
+	APMCP_Repair_Post::register();
 
 	// MCP resources.
 	APMCP_Resource_Taxonomy_Map::register();

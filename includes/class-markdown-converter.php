@@ -333,6 +333,250 @@ class APMCP_Markdown_Converter {
 	}
 
 	/**
+	 * Convert legacy (pre-Gutenberg) HTML content to Gutenberg block markup.
+	 *
+	 * Handles the common HTML structures found in classic WordPress posts:
+	 * <p>, <blockquote>, <h1>-<h6>, <ul>, <ol>, <img>, <hr>, bare text.
+	 * Strips deprecated tags (<font>, <center>, etc.) preserving their content.
+	 *
+	 * @param string $html Classic HTML content.
+	 * @return string Gutenberg block markup.
+	 */
+	public static function html_to_blocks( $html ) {
+		if ( empty( trim( $html ) ) ) {
+			return '';
+		}
+
+		// If content already has block markup, return as-is.
+		if ( has_blocks( $html ) ) {
+			return $html;
+		}
+
+		// Strip deprecated tags, keeping inner content.
+		$deprecated = array( 'font', 'center', 'marquee', 'blink', 'strike', 'big', 'small', 'tt', 'u' );
+		foreach ( $deprecated as $tag ) {
+			$html = preg_replace( '/<' . $tag . '[^>]*>/i', '', $html );
+			$html = preg_replace( '/<\/' . $tag . '>/i', '', $html );
+		}
+
+		// Normalize line endings.
+		$html = str_replace( array( "\r\n", "\r" ), "\n", $html );
+
+		// Use DOMDocument for robust HTML parsing.
+		$blocks = array();
+
+		// Wrap in a root element for parsing.
+		$wrapped = '<div id="apmcp-root">' . $html . '</div>';
+
+		$doc = new DOMDocument( '1.0', 'UTF-8' );
+		// Suppress warnings from malformed HTML.
+		$prev = libxml_use_internal_errors( true );
+		$doc->loadHTML( '<?xml encoding="UTF-8">' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $prev );
+
+		$root = $doc->getElementById( 'apmcp-root' );
+		if ( ! $root ) {
+			// Fallback: treat entire content as a single paragraph.
+			$text = wp_strip_all_tags( $html );
+			if ( ! empty( trim( $text ) ) ) {
+				return "<!-- wp:paragraph -->\n<p>" . trim( $text ) . "</p>\n<!-- /wp:paragraph -->";
+			}
+			return '';
+		}
+
+		foreach ( $root->childNodes as $node ) {
+			$block = self::dom_node_to_block( $node, $doc );
+			if ( null !== $block ) {
+				$blocks[] = $block;
+			}
+		}
+
+		return implode( "\n\n", $blocks );
+	}
+
+	/**
+	 * Convert a single DOM node to a Gutenberg block.
+	 *
+	 * @param DOMNode     $node The DOM node.
+	 * @param DOMDocument $doc  The parent document.
+	 * @return string|null Block markup, or null to skip.
+	 */
+	private static function dom_node_to_block( $node, $doc ) {
+		// Text nodes: wrap non-empty text in a paragraph.
+		if ( $node->nodeType === XML_TEXT_NODE ) {
+			$text = trim( $node->textContent );
+			if ( empty( $text ) ) {
+				return null;
+			}
+			// If the text contains double newlines, split into multiple paragraphs.
+			$paragraphs = preg_split( '/\n{2,}/', $text );
+			$para_blocks = array();
+			foreach ( $paragraphs as $para ) {
+				$para = trim( $para );
+				if ( ! empty( $para ) ) {
+					$para_blocks[] = "<!-- wp:paragraph -->\n<p>{$para}</p>\n<!-- /wp:paragraph -->";
+				}
+			}
+			return ! empty( $para_blocks ) ? implode( "\n\n", $para_blocks ) : null;
+		}
+
+		// Only process element nodes.
+		if ( $node->nodeType !== XML_ELEMENT_NODE ) {
+			return null;
+		}
+
+		$tag = strtolower( $node->nodeName );
+
+		switch ( $tag ) {
+			case 'p':
+				$inner = self::get_inner_html( $node, $doc );
+				$inner = trim( $inner );
+				if ( empty( $inner ) ) {
+					return null;
+				}
+				// Check if this paragraph contains only an image.
+				if ( preg_match( '/^<img\s[^>]*?\/?>\s*$/i', $inner ) ) {
+					return self::img_html_to_block( $inner );
+				}
+				// Check if paragraph contains a linked image.
+				if ( preg_match( '/^<a\s[^>]*>\s*<img\s[^>]*?\/?>\s*<\/a>\s*$/i', $inner ) ) {
+					return self::img_html_to_block( $inner );
+				}
+				return "<!-- wp:paragraph -->\n<p>{$inner}</p>\n<!-- /wp:paragraph -->";
+
+			case 'h1':
+			case 'h2':
+			case 'h3':
+			case 'h4':
+			case 'h5':
+			case 'h6':
+				$level = (int) substr( $tag, 1 );
+				$inner = self::get_inner_html( $node, $doc );
+				$attrs = $level !== 2 ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
+				return "<!-- wp:heading{$attrs} -->\n<{$tag}>{$inner}</{$tag}>\n<!-- /wp:heading -->";
+
+			case 'blockquote':
+				$inner = self::get_inner_html( $node, $doc );
+				// Ensure content is wrapped in <p> tags if not already.
+				if ( strpos( $inner, '<p' ) === false ) {
+					$inner = '<p>' . trim( $inner ) . '</p>';
+				}
+				return "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\">{$inner}</blockquote>\n<!-- /wp:quote -->";
+
+			case 'ul':
+				$inner = self::get_inner_html( $node, $doc );
+				return "<!-- wp:list -->\n<ul>{$inner}</ul>\n<!-- /wp:list -->";
+
+			case 'ol':
+				$inner = self::get_inner_html( $node, $doc );
+				return "<!-- wp:list {\"ordered\":true} -->\n<ol>{$inner}</ol>\n<!-- /wp:list -->";
+
+			case 'hr':
+				return "<!-- wp:separator -->\n<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>\n<!-- /wp:separator -->";
+
+			case 'img':
+				$outer = self::get_outer_html( $node, $doc );
+				return self::img_html_to_block( $outer );
+
+			case 'figure':
+				// Already a figure — likely from newer content. Wrap as image block.
+				$outer = self::get_outer_html( $node, $doc );
+				if ( strpos( $outer, '<img' ) !== false ) {
+					return "<!-- wp:image -->\n{$outer}\n<!-- /wp:image -->";
+				}
+				return "<!-- wp:paragraph -->\n<p>{$outer}</p>\n<!-- /wp:paragraph -->";
+
+			case 'pre':
+				$code = $node->textContent;
+				$code = esc_html( $code );
+				return "<!-- wp:code -->\n<pre class=\"wp-block-code\"><code>{$code}</code></pre>\n<!-- /wp:code -->";
+
+			case 'div':
+				// Recurse into divs — they're layout wrappers in classic content.
+				$child_blocks = array();
+				foreach ( $node->childNodes as $child ) {
+					$block = self::dom_node_to_block( $child, $doc );
+					if ( null !== $block ) {
+						$child_blocks[] = $block;
+					}
+				}
+				return ! empty( $child_blocks ) ? implode( "\n\n", $child_blocks ) : null;
+
+			case 'br':
+				return null; // Skip bare <br> tags.
+
+			case 'a':
+				// A standalone link (not inside a paragraph) — check if it wraps an image.
+				$inner = self::get_inner_html( $node, $doc );
+				if ( preg_match( '/<img\s/i', $inner ) ) {
+					$outer = self::get_outer_html( $node, $doc );
+					return self::img_html_to_block( $outer );
+				}
+				// Treat as a paragraph.
+				$outer = self::get_outer_html( $node, $doc );
+				return "<!-- wp:paragraph -->\n<p>{$outer}</p>\n<!-- /wp:paragraph -->";
+
+			case 'table':
+				$outer = self::get_outer_html( $node, $doc );
+				return "<!-- wp:table -->\n<figure class=\"wp-block-table\">{$outer}</figure>\n<!-- /wp:table -->";
+
+			default:
+				// Unknown element: wrap its content in a paragraph.
+				$inner = self::get_inner_html( $node, $doc );
+				if ( ! empty( trim( $inner ) ) ) {
+					return "<!-- wp:paragraph -->\n<p>{$inner}</p>\n<!-- /wp:paragraph -->";
+				}
+				return null;
+		}
+	}
+
+	/**
+	 * Convert an HTML <img> tag (possibly wrapped in <a>) to a wp:image block.
+	 *
+	 * @param string $html HTML containing an img tag.
+	 * @return string Block markup.
+	 */
+	private static function img_html_to_block( $html ) {
+		$src = '';
+		$alt = '';
+		if ( preg_match( '/src="([^"]*)"/', $html, $m ) ) {
+			$src = esc_url( $m[1] );
+		}
+		if ( preg_match( '/alt="([^"]*)"/', $html, $m ) ) {
+			$alt = esc_attr( $m[1] );
+		}
+
+		return "<!-- wp:image -->\n<figure class=\"wp-block-image\"><img src=\"{$src}\" alt=\"{$alt}\"/></figure>\n<!-- /wp:image -->";
+	}
+
+	/**
+	 * Get inner HTML of a DOMNode.
+	 *
+	 * @param DOMNode     $node The node.
+	 * @param DOMDocument $doc  The document.
+	 * @return string Inner HTML.
+	 */
+	private static function get_inner_html( $node, $doc ) {
+		$inner = '';
+		foreach ( $node->childNodes as $child ) {
+			$inner .= $doc->saveHTML( $child );
+		}
+		return $inner;
+	}
+
+	/**
+	 * Get outer HTML of a DOMNode.
+	 *
+	 * @param DOMNode     $node The node.
+	 * @param DOMDocument $doc  The document.
+	 * @return string Outer HTML.
+	 */
+	private static function get_outer_html( $node, $doc ) {
+		return $doc->saveHTML( $node );
+	}
+
+	/**
 	 * Convert inline HTML (strong, em, a, code) to Markdown equivalents.
 	 */
 	public static function inline_html_to_markdown( $html ) {
