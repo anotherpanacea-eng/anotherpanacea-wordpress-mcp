@@ -60,7 +60,7 @@ class APMCP_Server_Segmentation {
 	 * Additional abilities allowed on the full surface (editorial + these).
 	 */
 	const FULL_ADDITIONS = array(
-		'anotherpanacea-mcp/transition-status',
+		'anotherpanacea-mcp/transition-post-status',
 		'anotherpanacea-mcp/delete-post',
 		'anotherpanacea-mcp/delete-comment',
 		'anotherpanacea-mcp/list-audit-log',

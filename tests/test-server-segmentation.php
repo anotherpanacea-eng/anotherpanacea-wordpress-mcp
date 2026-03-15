@@ -17,7 +17,7 @@ class ServerSegmentationTest extends WP_UnitTestCase {
 		$this->assertNotContains( 'anotherpanacea-mcp/create-post', $reader );
 		$this->assertNotContains( 'anotherpanacea-mcp/update-post', $reader );
 		$this->assertNotContains( 'anotherpanacea-mcp/delete-post', $reader );
-		$this->assertNotContains( 'anotherpanacea-mcp/transition-status', $reader );
+		$this->assertNotContains( 'anotherpanacea-mcp/transition-post-status', $reader );
 	}
 
 	public function test_editorial_surface_has_write_no_delete() {
@@ -31,7 +31,7 @@ class ServerSegmentationTest extends WP_UnitTestCase {
 
 		// Should NOT contain destructive operations.
 		$this->assertNotContains( 'anotherpanacea-mcp/delete-post', $editorial );
-		$this->assertNotContains( 'anotherpanacea-mcp/transition-status', $editorial );
+		$this->assertNotContains( 'anotherpanacea-mcp/transition-post-status', $editorial );
 		$this->assertNotContains( 'anotherpanacea-mcp/delete-comment', $editorial );
 	}
 
@@ -42,7 +42,7 @@ class ServerSegmentationTest extends WP_UnitTestCase {
 		$this->assertContains( 'anotherpanacea-mcp/search-posts', $full );
 		$this->assertContains( 'anotherpanacea-mcp/create-post', $full );
 		$this->assertContains( 'anotherpanacea-mcp/delete-post', $full );
-		$this->assertContains( 'anotherpanacea-mcp/transition-status', $full );
+		$this->assertContains( 'anotherpanacea-mcp/transition-post-status', $full );
 		$this->assertContains( 'anotherpanacea-mcp/list-audit-log', $full );
 	}
 

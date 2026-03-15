@@ -19,7 +19,7 @@ class AbilitiesRegisterTest extends WP_UnitTestCase {
 		'anotherpanacea-mcp/search-comments',
 		'anotherpanacea-mcp/create-post',
 		'anotherpanacea-mcp/update-post',
-		'anotherpanacea-mcp/transition-status',
+		'anotherpanacea-mcp/transition-post-status',
 		'anotherpanacea-mcp/upload-media',
 		'anotherpanacea-mcp/update-media',
 		'anotherpanacea-mcp/delete-post',
