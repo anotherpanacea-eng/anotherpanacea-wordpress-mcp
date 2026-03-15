@@ -30,16 +30,16 @@ class APMCP_Transition_Status {
 					'type'       => 'object',
 					'required'   => array( 'id', 'status' ),
 					'properties' => array(
-						'id'     => array(
+						'id'                    => array(
 							'type'        => 'integer',
 							'description' => 'Post ID.',
 						),
-						'status' => array(
+						'status'                => array(
 							'type'        => 'string',
 							'description' => 'Target status: draft, pending, publish, or private.',
 							'enum'        => array( 'draft', 'pending', 'publish', 'private' ),
 						),
-						'date'   => array(
+						'date'                  => array(
 							'type'        => 'string',
 							'description' => 'ISO 8601 date. For scheduling, set status to publish with a future date.',
 						),
@@ -47,7 +47,7 @@ class APMCP_Transition_Status {
 							'type'        => 'string',
 							'description' => 'ISO 8601 timestamp of last known modification. Rejects the transition if the post was modified since.',
 						),
-						'dry_run' => array(
+						'dry_run'               => array(
 							'type'        => 'boolean',
 							'description' => 'If true, validate the transition without applying it. Returns resulting status.',
 						),
@@ -121,7 +121,7 @@ class APMCP_Transition_Status {
 					'conflict',
 					'Post was modified since you last read it.',
 					array(
-						'status'             => 409,
+						'status'              => 409,
 						'actual_modified_gmt' => $actual,
 					)
 				);
@@ -135,7 +135,7 @@ class APMCP_Transition_Status {
 
 		// Handle scheduling: publish + future date = 'future' status in WordPress.
 		if ( ! empty( $input['date'] ) ) {
-			$timestamp = strtotime( $input['date'] );
+			$timestamp                  = strtotime( $input['date'] );
 			$post_data['post_date']     = get_date_from_gmt( gmdate( 'Y-m-d H:i:s', $timestamp ) );
 			$post_data['post_date_gmt'] = gmdate( 'Y-m-d H:i:s', $timestamp );
 
@@ -148,10 +148,10 @@ class APMCP_Transition_Status {
 		// Dry-run: validate and return preview.
 		if ( ! empty( $input['dry_run'] ) ) {
 			return array(
-				'dry_run'         => true,
-				'id'              => $id,
-				'current_status'  => $post->post_status,
-				'target_status'   => $post_data['post_status'],
+				'dry_run'        => true,
+				'id'             => $id,
+				'current_status' => $post->post_status,
+				'target_status'  => $post_data['post_status'],
 			);
 		}
 

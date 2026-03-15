@@ -38,9 +38,9 @@ class APMCP_List_Tags {
 					'items' => array(
 						'type'       => 'object',
 						'properties' => array(
-							'id'   => array( 'type' => 'integer' ),
-							'name' => array( 'type' => 'string' ),
-							'slug' => array( 'type' => 'string' ),
+							'id'    => array( 'type' => 'integer' ),
+							'name'  => array( 'type' => 'string' ),
+							'slug'  => array( 'type' => 'string' ),
 							'count' => array( 'type' => 'integer' ),
 						),
 					),

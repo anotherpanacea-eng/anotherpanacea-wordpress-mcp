@@ -160,6 +160,7 @@ function apmcp_register_abilities() {
 
 /**
  * Register a compatibility route at /wp/v2/wpmcp so that the
+ *
  * @automattic/mcp-wordpress-remote client (which expects this path)
  * can reach the MCP Adapter (which registers at /mcp/mcp-adapter-default-server).
  */

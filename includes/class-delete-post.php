@@ -28,7 +28,7 @@ class APMCP_Delete_Post {
 					'type'       => 'object',
 					'required'   => array( 'id' ),
 					'properties' => array(
-						'id' => array(
+						'id'                    => array(
 							'type'        => 'integer',
 							'description' => 'Post ID to trash.',
 						),
@@ -94,9 +94,9 @@ class APMCP_Delete_Post {
 					'conflict',
 					'Post was modified since you last read it.',
 					array(
-					'status'             => 409,
-					'actual_modified_gmt' => $actual,
-				)
+						'status'              => 409,
+						'actual_modified_gmt' => $actual,
+					)
 				);
 			}
 		}

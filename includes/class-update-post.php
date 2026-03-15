@@ -30,42 +30,42 @@ class APMCP_Update_Post {
 					'type'       => 'object',
 					'required'   => array( 'id' ),
 					'properties' => array(
-						'id'             => array(
+						'id'                    => array(
 							'type'        => 'integer',
 							'description' => 'Post ID to update.',
 						),
-						'title'          => array(
+						'title'                 => array(
 							'type'        => 'string',
 							'description' => 'New post title.',
 						),
-						'content'        => array(
+						'content'               => array(
 							'type'        => 'string',
 							'description' => 'New content in Markdown (default), HTML, or block markup.',
 						),
-						'format'         => array(
+						'format'                => array(
 							'type'        => 'string',
 							'description' => 'Content format: markdown (default), html, or blocks.',
 							'enum'        => array( 'markdown', 'html', 'blocks' ),
 						),
-						'categories'     => array(
+						'categories'            => array(
 							'type'        => 'array',
 							'items'       => array( 'type' => 'string' ),
 							'description' => 'Category slugs. Replaces existing categories.',
 						),
-						'tags'           => array(
+						'tags'                  => array(
 							'type'        => 'array',
 							'items'       => array( 'type' => 'string' ),
 							'description' => 'Tag slugs. Replaces existing tags.',
 						),
-						'excerpt'        => array(
+						'excerpt'               => array(
 							'type'        => 'string',
 							'description' => 'Post excerpt.',
 						),
-						'slug'           => array(
+						'slug'                  => array(
 							'type'        => 'string',
 							'description' => 'Post slug.',
 						),
-						'featured_media' => array(
+						'featured_media'        => array(
 							'type'        => 'integer',
 							'description' => 'Media ID for featured image.',
 						),
@@ -73,7 +73,7 @@ class APMCP_Update_Post {
 							'type'        => 'string',
 							'description' => 'ISO 8601 timestamp of last known modification. If provided and the post has been modified since, the update is rejected with a conflict error.',
 						),
-						'dry_run' => array(
+						'dry_run'               => array(
 							'type'        => 'boolean',
 							'description' => 'If true, validate the update without applying changes. Returns what would change.',
 						),
@@ -82,13 +82,13 @@ class APMCP_Update_Post {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'id'       => array( 'type' => 'integer' ),
-						'title'    => array( 'type' => 'string' ),
-						'slug'     => array( 'type' => 'string' ),
-						'status'   => array( 'type' => 'string' ),
-						'modified' => array( 'type' => 'string' ),
-						'link'     => array( 'type' => 'string' ),
-						'dry_run'  => array( 'type' => 'boolean' ),
+						'id'                => array( 'type' => 'integer' ),
+						'title'             => array( 'type' => 'string' ),
+						'slug'              => array( 'type' => 'string' ),
+						'status'            => array( 'type' => 'string' ),
+						'modified'          => array( 'type' => 'string' ),
+						'link'              => array( 'type' => 'string' ),
+						'dry_run'           => array( 'type' => 'boolean' ),
 						'conflict_detected' => array( 'type' => 'boolean' ),
 					),
 				),
@@ -140,7 +140,7 @@ class APMCP_Update_Post {
 					'conflict',
 					'Post was modified since you last read it.',
 					array(
-						'status'             => 409,
+						'status'              => 409,
 						'actual_modified_gmt' => $actual,
 					)
 				);

@@ -32,7 +32,7 @@ class APMCP_Prompt_Review_Post {
 							'description' => 'The ID of the post to review.',
 						),
 					),
-					'required' => array( 'post_id' ),
+					'required'   => array( 'post_id' ),
 				),
 				'output_schema'       => array(
 					'type'       => 'object',
@@ -54,7 +54,7 @@ class APMCP_Prompt_Review_Post {
 							),
 						),
 					),
-					'required' => array( 'messages' ),
+					'required'   => array( 'messages' ),
 				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),

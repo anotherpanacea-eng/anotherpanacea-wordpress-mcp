@@ -78,7 +78,7 @@ class APMCP_Search_Comments {
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
 				'show_in_rest'        => true,
 				'meta'                => array(
-					'mcp' => array( 'public' => true ),
+					'mcp'         => array( 'public' => true ),
 					'annotations' => array(
 						'readonly'    => true,
 						'destructive' => false,
@@ -175,7 +175,7 @@ class APMCP_Search_Comments {
 				'author_email' => $comment->comment_author_email,
 				'author_url'   => $comment->comment_author_url,
 				'date'         => $comment->comment_date_gmt ? mysql2date( 'c', $comment->comment_date_gmt ) : null,
-				'content'      => strip_tags( $comment->comment_content ),
+				'content'      => wp_strip_all_tags( $comment->comment_content ),
 				'status'       => $comment->comment_approved,
 				'parent'       => (int) $comment->comment_parent,
 				'type'         => $comment->comment_type,

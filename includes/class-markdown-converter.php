@@ -103,7 +103,8 @@ class APMCP_Markdown_Converter {
 			$md
 		);
 
-		// Ordered lists: <!-- wp:list {"ordered":true} -->.
+		// phpcs:ignore Squiz.PHP.CommentedOutCode.Found -- Block comment format, not code.
+		// Ordered lists: wp:list with ordered attribute.
 		$md = preg_replace_callback(
 			'/<!-- wp:list\s*\{[^}]*"ordered"\s*:\s*true[^}]*\}\s*-->\s*<ol[^>]*>(.*?)<\/ol>\s*<!-- \/wp:list -->/s',
 			function ( $m ) {
@@ -231,57 +232,57 @@ class APMCP_Markdown_Converter {
 
 			// Blank line — skip.
 			if ( '' === trim( $line ) ) {
-				$i++;
+				++$i;
 				continue;
 			}
 
 			// Fenced code block.
 			if ( preg_match( '/^```(\w*)/', $line, $m ) ) {
-				$lang      = $m[1];
+				$lang       = $m[1];
 				$code_lines = array();
-				$i++;
+				++$i;
 				while ( $i < $count && ! preg_match( '/^```\s*$/', $lines[ $i ] ) ) {
 					$code_lines[] = $lines[ $i ];
-					$i++;
+					++$i;
 				}
-				$i++; // skip closing ```
-				$code    = esc_html( implode( "\n", $code_lines ) );
-				$attrs   = $lang ? ' ' . wp_json_encode( array( 'language' => $lang ) ) : '';
+				++$i; // Skip closing fence.
+				$code     = esc_html( implode( "\n", $code_lines ) );
+				$attrs    = $lang ? ' ' . wp_json_encode( array( 'language' => $lang ) ) : '';
 				$blocks[] = "<!-- wp:code{$attrs} -->\n<pre class=\"wp-block-code\"><code>{$code}</code></pre>\n<!-- /wp:code -->";
 				continue;
 			}
 
 			// Heading.
 			if ( preg_match( '/^(#{1,6})\s+(.+)$/', $line, $m ) ) {
-				$level = strlen( $m[1] );
-				$text  = self::inline_markdown_to_html( trim( $m[2] ) );
-				$attrs = 2 !== $level ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
+				$level    = strlen( $m[1] );
+				$text     = self::inline_markdown_to_html( trim( $m[2] ) );
+				$attrs    = 2 !== $level ? ' ' . wp_json_encode( array( 'level' => $level ) ) : '';
 				$blocks[] = "<!-- wp:heading{$attrs} -->\n<h{$level}>{$text}</h{$level}>\n<!-- /wp:heading -->";
-				$i++;
+				++$i;
 				continue;
 			}
 
 			// Horizontal rule.
 			if ( preg_match( '/^(---|\*\*\*|___)\s*$/', $line ) ) {
 				$blocks[] = "<!-- wp:separator -->\n<hr class=\"wp-block-separator has-alpha-channel-opacity\"/>\n<!-- /wp:separator -->";
-				$i++;
+				++$i;
 				continue;
 			}
 
 			// Image (standalone on its own line).
 			if ( preg_match( '/^!\[([^\]]*)\]\(([^)]+)\)$/', trim( $line ), $m ) ) {
-				$alt = esc_attr( $m[1] );
-				$url = esc_url( $m[2] );
+				$alt      = esc_attr( $m[1] );
+				$url      = esc_url( $m[2] );
 				$blocks[] = "<!-- wp:image -->\n<figure class=\"wp-block-image\"><img src=\"{$url}\" alt=\"{$alt}\"/></figure>\n<!-- /wp:image -->";
-				$i++;
+				++$i;
 				continue;
 			}
 
 			// Image at start of line followed by text (legacy inline image).
 			// Split into an image block + the remaining text goes back on the line stack.
 			if ( preg_match( '/^!\[([^\]]*)\]\(([^)]+)\)\s*(.+)$/', trim( $line ), $m ) ) {
-				$alt = esc_attr( $m[1] );
-				$url = esc_url( $m[2] );
+				$alt      = esc_attr( $m[1] );
+				$url      = esc_url( $m[2] );
 				$blocks[] = "<!-- wp:image -->\n<figure class=\"wp-block-image\"><img src=\"{$url}\" alt=\"{$alt}\"/></figure>\n<!-- /wp:image -->";
 				// Replace current line with the remaining text so it gets processed next.
 				$lines[ $i ] = $m[3];
@@ -293,10 +294,10 @@ class APMCP_Markdown_Converter {
 				$quote_lines = array();
 				while ( $i < $count && preg_match( '/^>\s?(.*)$/', $lines[ $i ], $m ) ) {
 					$quote_lines[] = $m[1];
-					$i++;
+					++$i;
 				}
 				$paragraphs = self::group_into_paragraphs( $quote_lines );
-				$inner = implode(
+				$inner      = implode(
 					"\n",
 					array_map(
 						function ( $p ) {
@@ -305,7 +306,7 @@ class APMCP_Markdown_Converter {
 						$paragraphs
 					)
 				);
-				$blocks[] = "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\">{$inner}</blockquote>\n<!-- /wp:quote -->";
+				$blocks[]   = "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\">{$inner}</blockquote>\n<!-- /wp:quote -->";
 				continue;
 			}
 
@@ -314,9 +315,9 @@ class APMCP_Markdown_Converter {
 				$list_lines = array();
 				while ( $i < $count && preg_match( '/^[\*\-\+]\s+(.+)$/', $lines[ $i ], $m ) ) {
 					$list_lines[] = self::inline_markdown_to_html( $m[1] );
-					$i++;
+					++$i;
 				}
-				$items = implode(
+				$items    = implode(
 					"\n",
 					array_map(
 						function ( $item ) {
@@ -334,9 +335,9 @@ class APMCP_Markdown_Converter {
 				$list_lines = array();
 				while ( $i < $count && preg_match( '/^\d+\.\s+(.+)$/', $lines[ $i ], $m ) ) {
 					$list_lines[] = self::inline_markdown_to_html( $m[1] );
-					$i++;
+					++$i;
 				}
-				$items = implode(
+				$items    = implode(
 					"\n",
 					array_map(
 						function ( $item ) {
@@ -355,7 +356,7 @@ class APMCP_Markdown_Converter {
 				&& ! preg_match( '/^(#{1,6}\s|```|>\s?|[\*\-\+]\s|\d+\.\s|---\s*$|\*\*\*\s*$|___\s*$|!\[)/', $lines[ $i ] )
 			) {
 				$para_lines[] = $lines[ $i ];
-				$i++;
+				++$i;
 			}
 			$text     = self::inline_markdown_to_html( implode( "\n", $para_lines ) );
 			$blocks[] = "<!-- wp:paragraph -->\n<p>{$text}</p>\n<!-- /wp:paragraph -->";
@@ -442,7 +443,7 @@ class APMCP_Markdown_Converter {
 				return null;
 			}
 			// If the text contains double newlines, split into multiple paragraphs.
-			$paragraphs = preg_split( '/\n{2,}/', $text );
+			$paragraphs  = preg_split( '/\n{2,}/', $text );
 			$para_blocks = array();
 			foreach ( $paragraphs as $para ) {
 				$para = trim( $para );
@@ -672,11 +673,21 @@ class APMCP_Markdown_Converter {
 		preg_match_all( '/<li[^>]*>(.*?)<\/li>/s', $html, $matches );
 		$counter = 1;
 		foreach ( $matches[1] as $item ) {
-			$text = self::inline_html_to_markdown( wp_kses( $item, array( 'strong' => array(), 'em' => array(), 'code' => array(), 'a' => array( 'href' => array() ) ) ) );
+			$text = self::inline_html_to_markdown(
+				wp_kses(
+					$item,
+					array(
+						'strong' => array(),
+						'em'     => array(),
+						'code'   => array(),
+						'a'      => array( 'href' => array() ),
+					)
+				)
+			);
 			$text = trim( $text );
 			if ( $ordered ) {
 				$items[] = "{$counter}. {$text}";
-				$counter++;
+				++$counter;
 			} else {
 				$items[] = "- {$text}";
 			}

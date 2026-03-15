@@ -65,7 +65,7 @@ class APMCP_Resource_Taxonomy_Map {
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
 				'show_in_rest'        => true,
 				'meta'                => array(
-					'mcp' => array(
+					'mcp'         => array(
 						'public' => true,
 						'type'   => 'resource',
 						'uri'    => 'WordPress://anotherpanacea-mcp/taxonomy-map',

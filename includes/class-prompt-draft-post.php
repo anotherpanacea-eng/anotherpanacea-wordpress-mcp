@@ -27,7 +27,7 @@ class APMCP_Prompt_Draft_Post {
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
-						'topic' => array(
+						'topic'    => array(
 							'type'        => 'string',
 							'description' => 'The topic or working title for the post to draft.',
 						),
@@ -36,7 +36,7 @@ class APMCP_Prompt_Draft_Post {
 							'description' => 'The target category slug for the post (optional).',
 						),
 					),
-					'required' => array( 'topic' ),
+					'required'   => array( 'topic' ),
 				),
 				'output_schema'       => array(
 					'type'       => 'object',
@@ -58,7 +58,7 @@ class APMCP_Prompt_Draft_Post {
 							),
 						),
 					),
-					'required' => array( 'messages' ),
+					'required'   => array( 'messages' ),
 				),
 				'execute_callback'    => array( __CLASS__, 'execute' ),
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),

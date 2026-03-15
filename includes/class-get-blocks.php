@@ -59,7 +59,7 @@ class APMCP_Get_Blocks {
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
 				'show_in_rest'        => true,
 				'meta'                => array(
-					'mcp' => array( 'public' => true ),
+					'mcp'         => array( 'public' => true ),
 					'annotations' => array(
 						'readonly'    => true,
 						'destructive' => false,

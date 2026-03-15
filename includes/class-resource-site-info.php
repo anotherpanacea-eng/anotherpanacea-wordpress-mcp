@@ -31,14 +31,14 @@ class APMCP_Resource_Site_Info {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'title'          => array( 'type' => 'string' ),
-						'tagline'        => array( 'type' => 'string' ),
-						'url'            => array( 'type' => 'string' ),
-						'timezone'       => array( 'type' => 'string' ),
-						'date_format'    => array( 'type' => 'string' ),
-						'language'       => array( 'type' => 'string' ),
-						'active_theme'   => array( 'type' => 'string' ),
-						'wp_version'     => array( 'type' => 'string' ),
+						'title'        => array( 'type' => 'string' ),
+						'tagline'      => array( 'type' => 'string' ),
+						'url'          => array( 'type' => 'string' ),
+						'timezone'     => array( 'type' => 'string' ),
+						'date_format'  => array( 'type' => 'string' ),
+						'language'     => array( 'type' => 'string' ),
+						'active_theme' => array( 'type' => 'string' ),
+						'wp_version'   => array( 'type' => 'string' ),
 					),
 					'required'   => array( 'title', 'url', 'timezone', 'wp_version' ),
 				),
@@ -46,7 +46,7 @@ class APMCP_Resource_Site_Info {
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
 				'show_in_rest'        => true,
 				'meta'                => array(
-					'mcp' => array(
+					'mcp'         => array(
 						'public' => true,
 						'type'   => 'resource',
 						'uri'    => 'WordPress://anotherpanacea-mcp/site-info',

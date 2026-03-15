@@ -36,7 +36,7 @@ class APMCP_Repair_Post {
 	 */
 	public static function register() {
 		// Build the enum list from operation keys.
-		$op_keys = array_keys( self::OPERATIONS );
+		$op_keys         = array_keys( self::OPERATIONS );
 		$op_descriptions = array();
 		foreach ( self::OPERATIONS as $key => $desc ) {
 			$op_descriptions[] = "`{$key}`: {$desc}";
@@ -52,11 +52,11 @@ class APMCP_Repair_Post {
 					'type'       => 'object',
 					'required'   => array( 'id', 'operations' ),
 					'properties' => array(
-						'id' => array(
+						'id'                    => array(
 							'type'        => 'integer',
 							'description' => 'Post ID to repair.',
 						),
-						'operations' => array(
+						'operations'            => array(
 							'type'        => 'array',
 							'description' => 'List of repair operations to apply.',
 							'items'       => array(
@@ -64,7 +64,7 @@ class APMCP_Repair_Post {
 								'enum' => $op_keys,
 							),
 						),
-						'dry_run' => array(
+						'dry_run'               => array(
 							'type'        => 'boolean',
 							'description' => 'If true, return what would change without writing. Default: false.',
 							'default'     => false,
@@ -78,9 +78,9 @@ class APMCP_Repair_Post {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'post_id'    => array( 'type' => 'integer' ),
-						'dry_run'    => array( 'type' => 'boolean' ),
-						'applied'    => array(
+						'post_id'      => array( 'type' => 'integer' ),
+						'dry_run'      => array( 'type' => 'boolean' ),
+						'applied'      => array(
 							'type'  => 'array',
 							'items' => array(
 								'type'       => 'object',
@@ -99,7 +99,7 @@ class APMCP_Repair_Post {
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
 				'show_in_rest'        => true,
 				'meta'                => array(
-					'mcp' => array( 'public' => true ),
+					'mcp'         => array( 'public' => true ),
 					'annotations' => array(
 						'readonly'    => false,
 						'destructive' => false,
@@ -167,9 +167,9 @@ class APMCP_Repair_Post {
 					'conflict',
 					'Post was modified since you last read it. Re-read and try again.',
 					array(
-						'status'           => 409,
-						'expected'         => $input['expected_modified_gmt'],
-						'actual'           => $current_modified,
+						'status'   => 409,
+						'expected' => $input['expected_modified_gmt'],
+						'actual'   => $current_modified,
 					)
 				);
 			}
@@ -184,10 +184,10 @@ class APMCP_Repair_Post {
 		}
 
 		// Run repairs.
-		$content      = $post->post_content;
-		$title        = $post->post_title;
-		$excerpt      = $post->post_excerpt;
-		$results      = array();
+		$content         = $post->post_content;
+		$title           = $post->post_title;
+		$excerpt         = $post->post_excerpt;
+		$results         = array();
 		$content_changed = false;
 		$title_changed   = false;
 		$excerpt_changed = false;
@@ -197,7 +197,7 @@ class APMCP_Repair_Post {
 				case 'http-to-https':
 					$result = self::repair_http_to_https( $content );
 					if ( $result['changed'] ) {
-						$content = $result['content'];
+						$content         = $result['content'];
 						$content_changed = true;
 					}
 					$results[] = array(
@@ -211,7 +211,7 @@ class APMCP_Repair_Post {
 				case 'strip-deprecated-html':
 					$result = self::repair_strip_deprecated( $content );
 					if ( $result['changed'] ) {
-						$content = $result['content'];
+						$content         = $result['content'];
 						$content_changed = true;
 					}
 					$results[] = array(
@@ -233,10 +233,10 @@ class APMCP_Repair_Post {
 					} else {
 						$new_content = APMCP_Markdown_Converter::html_to_blocks( $content );
 						if ( $new_content !== $content ) {
-							$old_content = $content;
-							$content = $new_content;
+							$old_content     = $content;
+							$content         = $new_content;
 							$content_changed = true;
-							$results[] = array(
+							$results[]       = array(
 								'operation'   => $op,
 								'status'      => 'applied',
 								'description' => 'Converted classic HTML to Gutenberg blocks.',
@@ -266,9 +266,9 @@ class APMCP_Repair_Post {
 					} else {
 						$new_excerpt = self::generate_excerpt( $content );
 						if ( $new_excerpt ) {
-							$excerpt = $new_excerpt;
+							$excerpt         = $new_excerpt;
 							$excerpt_changed = true;
-							$results[] = array(
+							$results[]       = array(
 								'operation'   => $op,
 								'status'      => 'applied',
 								'description' => 'Generated excerpt from first paragraph.',
@@ -288,7 +288,7 @@ class APMCP_Repair_Post {
 				case 'whitespace-normalize':
 					$result = self::repair_whitespace( $content );
 					if ( $result['changed'] ) {
-						$content = $result['content'];
+						$content         = $result['content'];
 						$content_changed = true;
 					}
 					$results[] = array(
@@ -302,10 +302,10 @@ class APMCP_Repair_Post {
 				case 'decode-title-entities':
 					$decoded = html_entity_decode( $title, ENT_QUOTES | ENT_HTML5 );
 					if ( $decoded !== $title ) {
-						$old_title = $title;
-						$title = $decoded;
+						$old_title     = $title;
+						$title         = $decoded;
 						$title_changed = true;
-						$results[] = array(
+						$results[]     = array(
 							'operation'   => $op,
 							'status'      => 'applied',
 							'description' => 'Decoded HTML entities in title.',
@@ -327,7 +327,7 @@ class APMCP_Repair_Post {
 				case 'strip-empty-tags':
 					$result = self::repair_strip_empty_tags( $content );
 					if ( $result['changed'] ) {
-						$content = $result['content'];
+						$content         = $result['content'];
 						$content_changed = true;
 					}
 					$results[] = array(
@@ -379,7 +379,7 @@ class APMCP_Repair_Post {
 	 * @return array Result with content, changed flag, description, and details.
 	 */
 	private static function repair_http_to_https( $content ) {
-		$count = 0;
+		$count        = 0;
 		$changed_urls = array();
 
 		// Replace http:// with https:// in href and src attributes.
@@ -421,7 +421,7 @@ class APMCP_Repair_Post {
 	 * @return array Result with content, changed flag, description, and details.
 	 */
 	private static function repair_strip_deprecated( $content ) {
-		$tags_found = array();
+		$tags_found  = array();
 		$new_content = $content;
 
 		foreach ( APMCP_Audit_Post::DEPRECATED_TAGS as $tag ) {
@@ -494,7 +494,7 @@ class APMCP_Repair_Post {
 				-1,
 				$tag_count
 			);
-			$count += $tag_count;
+			$count  += $tag_count;
 		}
 
 		$changed = $content !== $original;

@@ -164,7 +164,7 @@ class APMCP_Server_Segmentation {
 								),
 							),
 						),
-						'required' => array( 'abilities' ),
+						'required'   => array( 'abilities' ),
 					),
 					'execute_callback'    => array( __CLASS__, "discover_{$surface}" ),
 					'permission_callback' => array( __CLASS__, 'check_permissions' ),

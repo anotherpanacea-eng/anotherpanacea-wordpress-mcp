@@ -146,9 +146,9 @@ class APMCP_Update_Blocks {
 					'conflict',
 					'Post was modified since you last read it.',
 					array(
-					'status'             => 409,
-					'actual_modified_gmt' => $actual,
-				)
+						'status'              => 409,
+						'actual_modified_gmt' => $actual,
+					)
 				);
 			}
 		}
@@ -184,12 +184,12 @@ class APMCP_Update_Blocks {
 					}
 					// Replace the single block with parsed content (may be one or more blocks).
 					array_splice( $blocks, $index, 1, $new_blocks );
-					$operations_applied++;
+					++$operations_applied;
 					break;
 
 				case 'insert':
-					$index    = (int) ( $op['index'] ?? -1 );
-					$position = $op['position'] ?? 'after';
+					$index      = (int) ( $op['index'] ?? -1 );
+					$position   = $op['position'] ?? 'after';
 					$new_blocks = self::parse_content( $op );
 					if ( is_wp_error( $new_blocks ) ) {
 						return $new_blocks;
@@ -204,7 +204,7 @@ class APMCP_Update_Blocks {
 							: $index + 1;
 					}
 					array_splice( $blocks, $insert_at, 0, $new_blocks );
-					$operations_applied++;
+					++$operations_applied;
 					break;
 
 				case 'delete':
@@ -217,7 +217,7 @@ class APMCP_Update_Blocks {
 						);
 					}
 					array_splice( $blocks, $index, 1 );
-					$operations_applied++;
+					++$operations_applied;
 					break;
 
 				case 'move':
@@ -234,7 +234,7 @@ class APMCP_Update_Blocks {
 					// After removal, clamp target_index to valid range.
 					$target_index = max( 0, min( $target_index, count( $blocks ) ) );
 					array_splice( $blocks, $target_index, 0, $moving );
-					$operations_applied++;
+					++$operations_applied;
 					break;
 
 				default:

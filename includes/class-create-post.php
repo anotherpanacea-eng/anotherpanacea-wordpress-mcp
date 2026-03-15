@@ -77,7 +77,7 @@ class APMCP_Create_Post {
 							'type'        => 'integer',
 							'description' => 'Media ID for featured image.',
 						),
-						'dry_run' => array(
+						'dry_run'        => array(
 							'type'        => 'boolean',
 							'description' => 'If true, validate the post data without creating it. Returns resolved slug, categories, and any issues.',
 						),
@@ -164,12 +164,15 @@ class APMCP_Create_Post {
 		// Dry-run: validate and return preview without creating.
 		if ( ! empty( $input['dry_run'] ) ) {
 			$preview = array(
-				'dry_run'        => true,
-				'resolved_slug'  => wp_unique_post_slug(
+				'dry_run'       => true,
+				'resolved_slug' => wp_unique_post_slug(
 					$post_data['post_name'] ?? sanitize_title( $post_data['post_title'] ),
-					0, $post_data['post_status'], $post_data['post_type'] ?? 'post', 0
+					0,
+					$post_data['post_status'],
+					$post_data['post_type'] ?? 'post',
+					0
 				),
-				'status'         => $post_data['post_status'],
+				'status'        => $post_data['post_status'],
 			);
 			if ( ! empty( $input['categories'] ) ) {
 				$preview['resolved_categories'] = self::resolve_categories( $input['categories'] );

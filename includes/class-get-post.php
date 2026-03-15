@@ -27,11 +27,11 @@ class APMCP_Get_Post {
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
-						'id'   => array(
+						'id'        => array(
 							'type'        => 'integer',
 							'description' => 'Post ID.',
 						),
-						'slug' => array(
+						'slug'      => array(
 							'type'        => 'string',
 							'description' => 'Post slug.',
 						),
@@ -105,7 +105,7 @@ class APMCP_Get_Post {
 					'numberposts' => 1,
 				)
 			);
-			$post = ! empty( $posts ) ? $posts[0] : null;
+			$post  = ! empty( $posts ) ? $posts[0] : null;
 		} else {
 			return new WP_Error( 'missing_param', 'Either id or slug is required.', array( 'status' => 400 ) );
 		}

@@ -105,11 +105,11 @@ class APMCP_List_Revisions {
 		$revisions = array();
 		foreach ( $revisions_raw as $rev ) {
 			$entry = array(
-				'id'       => $rev->ID,
-				'author'   => get_the_author_meta( 'display_name', $rev->post_author ),
-				'date'     => mysql2date( 'c', $rev->post_modified_gmt ),
-				'title'    => $rev->post_title,
-				'excerpt'  => wp_trim_words( $rev->post_content, 30 ),
+				'id'      => $rev->ID,
+				'author'  => get_the_author_meta( 'display_name', $rev->post_author ),
+				'date'    => mysql2date( 'c', $rev->post_modified_gmt ),
+				'title'   => $rev->post_title,
+				'excerpt' => wp_trim_words( $rev->post_content, 30 ),
 			);
 
 			if ( $include_diff ) {

@@ -36,7 +36,7 @@ class APMCP_Audit_Post {
 					'type'       => 'object',
 					'required'   => array( 'id' ),
 					'properties' => array(
-						'id' => array(
+						'id'          => array(
 							'type'        => 'integer',
 							'description' => 'Post ID to audit.',
 						),
@@ -50,31 +50,31 @@ class APMCP_Audit_Post {
 				'output_schema'       => array(
 					'type'       => 'object',
 					'properties' => array(
-						'post_id'              => array( 'type' => 'integer' ),
-						'title'                => array( 'type' => 'string' ),
-						'slug'                 => array( 'type' => 'string' ),
-						'status'               => array( 'type' => 'string' ),
-						'post_type'            => array( 'type' => 'string' ),
-						'has_block_markup'     => array( 'type' => 'boolean' ),
-						'issues'               => array(
+						'post_id'          => array( 'type' => 'integer' ),
+						'title'            => array( 'type' => 'string' ),
+						'slug'             => array( 'type' => 'string' ),
+						'status'           => array( 'type' => 'string' ),
+						'post_type'        => array( 'type' => 'string' ),
+						'has_block_markup' => array( 'type' => 'boolean' ),
+						'issues'           => array(
 							'type'  => 'array',
 							'items' => array(
 								'type'       => 'object',
 								'properties' => array(
-									'type'        => array( 'type' => 'string' ),
-									'severity'    => array( 'type' => 'string' ),
-									'description' => array( 'type' => 'string' ),
+									'type'         => array( 'type' => 'string' ),
+									'severity'     => array( 'type' => 'string' ),
+									'description'  => array( 'type' => 'string' ),
 									'auto_fixable' => array( 'type' => 'boolean' ),
-									'details'     => array( 'description' => 'Additional context.' ),
+									'details'      => array( 'description' => 'Additional context.' ),
 								),
 							),
 						),
-						'summary'              => array(
+						'summary'          => array(
 							'type'       => 'object',
 							'properties' => array(
-								'total_issues'     => array( 'type' => 'integer' ),
-								'auto_fixable'     => array( 'type' => 'integer' ),
-								'needs_judgment'   => array( 'type' => 'integer' ),
+								'total_issues'   => array( 'type' => 'integer' ),
+								'auto_fixable'   => array( 'type' => 'integer' ),
+								'needs_judgment' => array( 'type' => 'integer' ),
 							),
 						),
 					),
@@ -83,7 +83,7 @@ class APMCP_Audit_Post {
 				'permission_callback' => array( __CLASS__, 'check_permissions' ),
 				'show_in_rest'        => true,
 				'meta'                => array(
-					'mcp' => array( 'public' => true ),
+					'mcp'         => array( 'public' => true ),
 					'annotations' => array(
 						'readonly'    => true,
 						'destructive' => false,
@@ -216,7 +216,7 @@ class APMCP_Audit_Post {
 		}
 
 		// 8. Check for HTML entities in title.
-		if ( $post->post_title !== html_entity_decode( $post->post_title, ENT_QUOTES | ENT_HTML5 ) ) {
+		if ( html_entity_decode( $post->post_title, ENT_QUOTES | ENT_HTML5 ) !== $post->post_title ) {
 			$issues[] = array(
 				'type'         => 'html_entities_in_title',
 				'severity'     => 'low',
@@ -230,7 +230,7 @@ class APMCP_Audit_Post {
 		}
 
 		// 9. Check for broken image references in content.
-		$images = self::find_image_urls( $content );
+		$images        = self::find_image_urls( $content );
 		$broken_images = array();
 		foreach ( $images as $img_url ) {
 			// Only check internal images — external ones are covered by link checking.
@@ -331,7 +331,7 @@ class APMCP_Audit_Post {
 		}
 
 		// Build summary.
-		$auto_fixable = count(
+		$auto_fixable   = count(
 			array_filter(
 				$issues,
 				function ( $i ) {

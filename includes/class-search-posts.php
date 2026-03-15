@@ -27,43 +27,43 @@ class APMCP_Search_Posts {
 				'input_schema'        => array(
 					'type'       => 'object',
 					'properties' => array(
-						'status'   => array(
+						'status'    => array(
 							'type'        => 'string',
 							'description' => 'Post status: draft, publish, pending, private, trash, or any.',
 							'enum'        => array( 'draft', 'publish', 'pending', 'private', 'trash', 'future', 'any' ),
 						),
-						'search'   => array(
+						'search'    => array(
 							'type'        => 'string',
 							'description' => 'Free-text search across title and content.',
 						),
-						'category' => array(
+						'category'  => array(
 							'type'        => 'string',
 							'description' => 'Category slug to filter by.',
 						),
-						'tag'      => array(
+						'tag'       => array(
 							'type'        => 'string',
 							'description' => 'Tag slug to filter by.',
 						),
-						'after'    => array(
+						'after'     => array(
 							'type'        => 'string',
 							'description' => 'ISO 8601 date. Posts modified after this date.',
 						),
-						'before'   => array(
+						'before'    => array(
 							'type'        => 'string',
 							'description' => 'ISO 8601 date. Posts modified before this date.',
 						),
-						'per_page' => array(
+						'per_page'  => array(
 							'type'        => 'integer',
 							'description' => 'Results per page. Default 20, max 100.',
 							'minimum'     => 1,
 							'maximum'     => 100,
 						),
-						'page'     => array(
+						'page'      => array(
 							'type'        => 'integer',
 							'description' => 'Page number for pagination. Default 1.',
 							'minimum'     => 1,
 						),
-						'orderby'  => array(
+						'orderby'   => array(
 							'type'        => 'string',
 							'description' => 'Sort field: date, modified, or title.',
 							'enum'        => array( 'date', 'modified', 'title' ),
@@ -79,9 +79,9 @@ class APMCP_Search_Posts {
 					'type'       => 'object',
 					'properties' => array(
 						'posts'       => array(
-						'type'  => 'array',
-						'items' => array( 'type' => 'object' ),
-					),
+							'type'  => 'array',
+							'items' => array( 'type' => 'object' ),
+						),
 						'total'       => array( 'type' => 'integer' ),
 						'total_pages' => array( 'type' => 'integer' ),
 						'page'        => array( 'type' => 'integer' ),
@@ -103,12 +103,12 @@ class APMCP_Search_Posts {
 	 */
 	public static function check_permissions( $input = null ) {
 		$post_type = $input['post_type'] ?? 'post';
-		$cap = 'page' === $post_type ? 'edit_pages' : 'edit_posts';
+		$cap       = 'page' === $post_type ? 'edit_pages' : 'edit_posts';
 		if ( ! current_user_can( $cap ) ) {
 			return new WP_Error( 'forbidden', 'You do not have permission to search this content type.', array( 'status' => 403 ) );
 		}
 		// Private posts require read_private_posts capability.
-		$status = $input['status'] ?? 'draft';
+		$status      = $input['status'] ?? 'draft';
 		$private_cap = 'page' === $post_type ? 'read_private_pages' : 'read_private_posts';
 		if ( 'private' === $status || 'any' === $status ) {
 			if ( ! current_user_can( $private_cap ) ) {
@@ -168,7 +168,7 @@ class APMCP_Search_Posts {
 		// Users who can't (Authors/Contributors) only see their own.
 		// non-published posts, matching WP core REST API behavior.
 		if ( ! current_user_can( 'page' === $input['post_type'] ? 'edit_others_pages' : 'edit_others_posts' ) ) {
-			$requested = is_array( $statuses ) ? $statuses : array( $statuses );
+			$requested          = is_array( $statuses ) ? $statuses : array( $statuses );
 			$needs_author_scope = array_diff( $requested, array( 'publish' ) );
 			if ( ! empty( $needs_author_scope ) ) {
 				$args['author'] = get_current_user_id();

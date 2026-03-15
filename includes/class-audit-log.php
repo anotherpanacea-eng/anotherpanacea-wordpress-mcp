@@ -350,18 +350,20 @@ class APMCP_Audit_Log {
 
 		// Total count.
 		if ( ! empty( $params ) ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Custom audit table with dynamic WHERE clause; caching is inappropriate for audit queries.
 			$total = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE {$where_clause}", $params ) );
 		} else {
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom audit table; caching is inappropriate for audit queries.
 			$total = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
 		}
 
 		// Fetch rows.
-		$query_params   = array_merge( $params, array( $per_page, $offset ) );
+		$query_params = array_merge( $params, array( $per_page, $offset ) );
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom audit table with dynamic WHERE clause; caching is inappropriate for audit queries.
 		$rows = $wpdb->get_results(
+			// phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- Dynamic WHERE clause; placeholder count varies with filters.
 			$wpdb->prepare(
-				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Dynamic WHERE clause built from validated params.
 				"SELECT id, timestamp, user_id, ability_name, post_id, before_status, after_status, request_id FROM {$table} WHERE {$where_clause} ORDER BY id DESC LIMIT %d OFFSET %d",
 				$query_params
 			),

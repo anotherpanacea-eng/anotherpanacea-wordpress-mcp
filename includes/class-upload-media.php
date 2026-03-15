@@ -146,11 +146,13 @@ class APMCP_Upload_Media {
 			}
 		} elseif ( ! empty( $input['file_base64'] ) ) {
 			// Decode base64 to temp file.
+			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decoding user-supplied base64 file data, not obfuscation.
 			$decoded = base64_decode( $input['file_base64'], true );
 			if ( false === $decoded ) {
 				return new WP_Error( 'invalid_base64', 'Invalid base64 data.', array( 'status' => 400 ) );
 			}
 			$tmp_file = wp_tempnam( $filename );
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Writing to temp file before sideload.
 			file_put_contents( $tmp_file, $decoded );
 		} else {
 			return new WP_Error( 'missing_file', 'One of file_url or file_base64 is required.', array( 'status' => 400 ) );
@@ -159,7 +161,7 @@ class APMCP_Upload_Media {
 		// File size check: reject files larger than MAX_FILE_SIZE.
 		$file_size = filesize( $tmp_file );
 		if ( false === $file_size || $file_size > self::MAX_FILE_SIZE ) {
-			@unlink( $tmp_file );
+			wp_delete_file( $tmp_file );
 			return new WP_Error(
 				'file_too_large',
 				sprintf( 'File size exceeds the maximum allowed size of %d MB.', self::MAX_FILE_SIZE / 1048576 ),
@@ -168,7 +170,7 @@ class APMCP_Upload_Media {
 		}
 
 		// MIME type check: validate actual MIME type against allowlist.
-		$mime_check = wp_check_filetype_and_ext( $tmp_file, $filename );
+		$mime_check    = wp_check_filetype_and_ext( $tmp_file, $filename );
 		$detected_mime = $mime_check['type'];
 
 		// Fall back to mime_content_type() if wp_check_filetype_and_ext() couldn't detect.
@@ -177,7 +179,7 @@ class APMCP_Upload_Media {
 		}
 
 		if ( empty( $detected_mime ) || ! in_array( $detected_mime, self::ALLOWED_MIME_TYPES, true ) ) {
-			@unlink( $tmp_file );
+			wp_delete_file( $tmp_file );
 			return new WP_Error(
 				'disallowed_mime_type',
 				sprintf(
@@ -198,7 +200,7 @@ class APMCP_Upload_Media {
 		$attachment_id = media_handle_sideload( $file_array, 0 );
 
 		if ( is_wp_error( $attachment_id ) ) {
-			@unlink( $tmp_file );
+			wp_delete_file( $tmp_file );
 			return $attachment_id;
 		}
 
