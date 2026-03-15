@@ -125,6 +125,14 @@ class APMCP_Update_Post {
 
 		$post_data = array( 'ID' => $id );
 
+		// Clear invalid page templates that would cause wp_update_post() to fail.
+		if ( 'page' === $post->post_type ) {
+			$current_template = get_page_template_slug( $id );
+			if ( $current_template && ! locate_template( $current_template ) ) {
+				$post_data['page_template'] = '';
+			}
+		}
+
 		if ( isset( $input['title'] ) ) {
 			$post_data['post_title'] = sanitize_text_field( $input['title'] );
 		}
