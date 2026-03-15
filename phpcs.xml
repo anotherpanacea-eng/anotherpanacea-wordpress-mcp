@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<ruleset name="AnotherPanacea MCP">
+    <description>WordPress coding standards for AnotherPanacea MCP plugin.</description>
+
+    <file>.</file>
+
+    <!-- Exclude third-party code -->
+    <exclude-pattern>/vendor/*</exclude-pattern>
+    <exclude-pattern>/bundled/*</exclude-pattern>
+    <exclude-pattern>/tests/*</exclude-pattern>
+
+    <!-- WordPress coding standards -->
+    <rule ref="WordPress">
+        <!-- Allow short array syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <!-- Allow file names that don't match WP conventions (our class files do match) -->
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
+    </rule>
+
+    <!-- Minimum PHP version -->
+    <config name="minimum_supported_wp_version" value="6.8"/>
+    <config name="testVersion" value="7.4-"/>
+
+    <!-- Text domain -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="anotherpanacea-mcp"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

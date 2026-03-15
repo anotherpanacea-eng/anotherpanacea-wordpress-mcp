@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AnotherPanacea MCP
  * Description: Registers MCP abilities for content management via the WordPress Abilities API and MCP Adapter.
- * Version:     1.3.0
+ * Version:     1.4.0
  * Author:      Joshua Miller
  * License:     GPL-2.0-or-later
  * Requires at least: 6.8
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APMCP_VERSION', '1.3.0' );
+define( 'APMCP_VERSION', '1.4.0' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
@@ -66,6 +66,7 @@ require_once APMCP_DIR . 'includes/class-manage-category.php';
 require_once APMCP_DIR . 'includes/class-manage-tag.php';
 require_once APMCP_DIR . 'includes/class-get-blocks.php';
 require_once APMCP_DIR . 'includes/class-update-blocks.php';
+require_once APMCP_DIR . 'includes/class-server-segmentation.php';
 
 /**
  * Register the ability category and all abilities.
@@ -76,6 +77,9 @@ add_action( 'wp_abilities_api_init', 'apmcp_register_abilities' );
 // Audit log hooks and table creation.
 add_action( 'plugins_loaded', array( 'APMCP_Audit_Log', 'init' ) );
 register_activation_hook( __FILE__, array( 'APMCP_Audit_Log', 'create_table' ) );
+
+// Server segmentation: register reader, editorial, and full MCP surfaces.
+APMCP_Server_Segmentation::init();
 
 function apmcp_register_category() {
 	if ( function_exists( 'wp_register_ability_category' ) ) {
