@@ -112,6 +112,18 @@ class APMCP_Transition_Status {
 			return new WP_Error( 'forbidden', 'You do not have permission to edit this post.', array( 'status' => 403 ) );
 		}
 
+		// Enforce post-type-specific publish capability.
+		if ( in_array( $input['status'], array( 'publish', 'private' ), true ) ) {
+			$publish_cap = 'page' === $post->post_type ? 'publish_pages' : 'publish_posts';
+			if ( ! current_user_can( $publish_cap ) ) {
+				return new WP_Error(
+					'forbidden',
+					sprintf( 'You do not have permission to publish this %s.', $post->post_type ),
+					array( 'status' => 403 )
+				);
+			}
+		}
+
 		// Concurrency guard.
 		if ( ! empty( $input['expected_modified_gmt'] ) ) {
 			$actual = mysql2date( 'c', $post->post_modified_gmt );

@@ -124,6 +124,11 @@ class APMCP_Audit_Post {
 			return new WP_Error( 'not_found', 'Post not found.', array( 'status' => 404 ) );
 		}
 
+		// Per-post permission gate: prevent auditing another user's draft/private post.
+		if ( ! current_user_can( 'read_post', $post->ID ) ) {
+			return new WP_Error( 'forbidden', 'You do not have permission to read this post.', array( 'status' => 403 ) );
+		}
+
 		$check_links = $input['check_links'] ?? true;
 		$content     = $post->post_content;
 		$issues      = array();
@@ -255,7 +260,9 @@ class APMCP_Audit_Post {
 		}
 
 		// 10. Check for dead external links (optional, slow).
-		if ( $check_links ) {
+		// Only available to users who can edit others' posts (admin/editor)
+		// because it causes the server to make outbound HTTP requests.
+		if ( $check_links && current_user_can( 'edit_others_posts' ) ) {
 			$all_links  = self::find_all_links( $content );
 			$dead_links = array();
 			$site_url   = get_site_url();
@@ -265,7 +272,13 @@ class APMCP_Audit_Post {
 				if ( 0 === strpos( $url, $site_url ) ) {
 					continue;
 				}
-				if ( preg_match( '/^(mailto:|tel:|#|javascript:)/i', $url ) ) {
+				if ( preg_match( '/^(mailto:|tel:|#|javascript:|data:)/i', $url ) ) {
+					continue;
+				}
+
+				// Only check http/https URLs.
+				$url_scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+				if ( ! in_array( strtolower( (string) $url_scheme ), array( 'http', 'https' ), true ) ) {
 					continue;
 				}
 
@@ -274,7 +287,7 @@ class APMCP_Audit_Post {
 					array(
 						'timeout'     => 5,
 						'redirection' => 3,
-						'sslverify'   => false,
+						'sslverify'   => true,
 					)
 				);
 

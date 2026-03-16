@@ -414,9 +414,19 @@ class APMCP_Server_Segmentation {
 			);
 		}
 
+		// Set audit context so the audit log records the real ability name and surface.
+		if ( class_exists( 'APMCP_Audit_Log' ) ) {
+			APMCP_Audit_Log::set_context( $ability_name, $surface );
+		}
+
 		// Execute.
 		try {
 			$result = $ability->execute( $parameters );
+
+			if ( class_exists( 'APMCP_Audit_Log' ) ) {
+				APMCP_Audit_Log::clear_context();
+			}
+
 			if ( is_wp_error( $result ) ) {
 				return array(
 					'success' => false,
@@ -428,6 +438,10 @@ class APMCP_Server_Segmentation {
 				'data'    => $result,
 			);
 		} catch ( \Throwable $e ) {
+			if ( class_exists( 'APMCP_Audit_Log' ) ) {
+				APMCP_Audit_Log::clear_context();
+			}
+
 			return array(
 				'success' => false,
 				'error'   => $e->getMessage(),

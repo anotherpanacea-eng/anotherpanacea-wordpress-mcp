@@ -29,6 +29,52 @@ class APMCP_Audit_Log {
 	const TABLE_SUFFIX = 'apmcp_audit_log';
 
 	/**
+	 * Current MCP execution context.
+	 *
+	 * Set by abilities via set_context() before performing writes,
+	 * so audit hooks can record the real ability name and MCP surface.
+	 *
+	 * @var array{ability_name: string, surface: string, request_id: string}|null
+	 */
+	private static $mcp_context = null;
+
+	/**
+	 * Set MCP execution context for audit logging.
+	 *
+	 * Call this at the start of any ability's execute() method that writes data.
+	 * The context is automatically cleared after each log entry.
+	 *
+	 * @param string $ability_name Full ability name (e.g. 'anotherpanacea-mcp/create-post').
+	 * @param string $surface      MCP server surface (e.g. 'full', 'editorial', or '').
+	 */
+	public static function set_context( $ability_name, $surface = '' ) {
+		self::$mcp_context = array(
+			'ability_name' => $ability_name,
+			'surface'      => $surface,
+		);
+	}
+
+	/**
+	 * Clear MCP execution context.
+	 */
+	public static function clear_context() {
+		self::$mcp_context = null;
+	}
+
+	/**
+	 * Get the current ability name, preferring the explicit MCP context.
+	 *
+	 * @param string $fallback_name Fallback ability name from the hook callback.
+	 * @return string
+	 */
+	private static function get_ability_name( $fallback_name ) {
+		if ( null !== self::$mcp_context && ! empty( self::$mcp_context['ability_name'] ) ) {
+			return self::$mcp_context['ability_name'];
+		}
+		return $fallback_name;
+	}
+
+	/**
 	 * Initialize hooks.
 	 *
 	 * Called on 'plugins_loaded' (or wp_abilities_api_init) after all abilities are registered.
@@ -132,7 +178,8 @@ class APMCP_Audit_Log {
 		if ( ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return;
 		}
-		self::log( 'anotherpanacea-mcp/create-post', $post_id, '', $post->post_status );
+		$ability = self::get_ability_name( 'wp-admin/create-post' );
+		self::log( $ability, $post_id, '', $post->post_status );
 	}
 
 	/**
@@ -151,12 +198,11 @@ class APMCP_Audit_Log {
 		if ( ! in_array( $post->post_type, array( 'post', 'page' ), true ) ) {
 			return;
 		}
-		// Determine which ability drove this change.
-		// We can't know for certain, so we record a generic label for
-		// transitions and a specific label for trashing (handled in on_trashed_post).
-		$ability = 'to-trash' === $new_status
-			? 'anotherpanacea-mcp/delete-post'
-			: 'anotherpanacea-mcp/transition-post-status';
+		// Use MCP context if set, otherwise label as wp-admin action.
+		$fallback = 'trash' === $new_status
+			? 'wp-admin/delete-post'
+			: 'wp-admin/transition-post-status';
+		$ability  = self::get_ability_name( $fallback );
 
 		self::log( $ability, $post->ID, $old_status, $new_status );
 	}
@@ -192,7 +238,8 @@ class APMCP_Audit_Log {
 		if ( ! $attachment ) {
 			return;
 		}
-		self::log( 'anotherpanacea-mcp/upload-media', $attachment_id, '', 'inherit' );
+		$ability = self::get_ability_name( 'wp-admin/upload-media' );
+		self::log( $ability, $attachment_id, '', 'inherit' );
 	}
 
 	/**
@@ -201,7 +248,8 @@ class APMCP_Audit_Log {
 	 * @param int $attachment_id Attachment post ID.
 	 */
 	public static function on_edit_attachment( $attachment_id ) {
-		self::log( 'anotherpanacea-mcp/update-media', $attachment_id, 'inherit', 'inherit' );
+		$ability = self::get_ability_name( 'wp-admin/update-media' );
+		self::log( $ability, $attachment_id, 'inherit', 'inherit' );
 	}
 
 	/**

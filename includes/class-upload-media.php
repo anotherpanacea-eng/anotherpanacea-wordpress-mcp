@@ -36,6 +36,24 @@ class APMCP_Upload_Media {
 	const MAX_FILE_SIZE = 10485760; // 10 * 1024 * 1024
 
 	/**
+	 * RFC 1918 / link-local / loopback CIDR ranges to block for SSRF protection.
+	 *
+	 * @var string[]
+	 */
+	const BLOCKED_IP_RANGES = array(
+		'10.0.0.0/8',
+		'172.16.0.0/12',
+		'192.168.0.0/16',
+		'127.0.0.0/8',
+		'169.254.0.0/16',  // Link-local.
+		'0.0.0.0/8',
+		'100.64.0.0/10',   // Carrier-grade NAT.
+		'::1/128',         // IPv6 loopback.
+		'fc00::/7',        // IPv6 ULA.
+		'fe80::/10',       // IPv6 link-local.
+	)
+
+	/**
 	 * Register the upload-media ability.
 	 */
 	public static function register() {
@@ -125,17 +143,10 @@ class APMCP_Upload_Media {
 		$tmp_file = null;
 
 		if ( ! empty( $input['file_url'] ) ) {
-			// Hostname allowlist check (optional — site owners may restrict via filter).
-			$allowed_hosts = apply_filters( 'apmcp_upload_allowed_hosts', array() );
-			if ( ! empty( $allowed_hosts ) ) {
-				$parsed_host = wp_parse_url( $input['file_url'], PHP_URL_HOST );
-				if ( ! in_array( $parsed_host, $allowed_hosts, true ) ) {
-					return new WP_Error(
-						'disallowed_host',
-						sprintf( 'The host "%s" is not in the allowed hosts list.', $parsed_host ),
-						array( 'status' => 403 )
-					);
-				}
+			// SSRF protection: validate scheme, host, and resolved IP before fetching.
+			$url_check = self::validate_remote_url( $input['file_url'] );
+			if ( is_wp_error( $url_check ) ) {
+				return $url_check;
 			}
 
 			// Download from URL.
@@ -241,5 +252,156 @@ class APMCP_Upload_Media {
 			'filename'  => basename( get_attached_file( $attachment_id ) ),
 			'mime_type' => $attachment->post_mime_type,
 		);
+	}
+
+	/**
+	 * Validate a remote URL for SSRF safety before fetching.
+	 *
+	 * Checks:
+	 * 1. Scheme must be http or https.
+	 * 2. Host must pass the optional allowlist filter (default: allow all external).
+	 * 3. Resolved IP must not be in RFC 1918, loopback, link-local, or metadata ranges.
+	 *
+	 * @param string $url The URL to validate.
+	 * @return true|WP_Error True if safe, WP_Error if blocked.
+	 */
+	private static function validate_remote_url( $url ) {
+		// 1. Scheme check.
+		$scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+		if ( ! in_array( strtolower( (string) $scheme ), array( 'http', 'https' ), true ) ) {
+			return new WP_Error(
+				'invalid_url_scheme',
+				'Only http and https URLs are allowed for file_url.',
+				array( 'status' => 400 )
+			);
+		}
+
+		// 2. Host extraction.
+		$host = wp_parse_url( $url, PHP_URL_HOST );
+		if ( empty( $host ) ) {
+			return new WP_Error(
+				'invalid_url',
+				'Could not parse host from file_url.',
+				array( 'status' => 400 )
+			);
+		}
+
+		// 3. Host allowlist (default: empty = allow all external hosts).
+		$allowed_hosts = apply_filters( 'apmcp_upload_allowed_hosts', array() );
+		if ( ! empty( $allowed_hosts ) && ! in_array( $host, $allowed_hosts, true ) ) {
+			return new WP_Error(
+				'disallowed_host',
+				sprintf( 'The host "%s" is not in the allowed hosts list.', $host ),
+				array( 'status' => 403 )
+			);
+		}
+
+		// 4. Resolve DNS and check for internal/private IPs.
+		$ips = gethostbynamel( $host );
+		if ( false === $ips || empty( $ips ) ) {
+			return new WP_Error(
+				'dns_resolution_failed',
+				sprintf( 'Could not resolve host "%s".', $host ),
+				array( 'status' => 400 )
+			);
+		}
+
+		foreach ( $ips as $ip ) {
+			if ( self::is_internal_ip( $ip ) ) {
+				return new WP_Error(
+					'internal_ip_blocked',
+					'The resolved IP address is in a private or reserved range. External URLs only.',
+					array( 'status' => 403 )
+				);
+			}
+		}
+
+		// 5. Block well-known cloud metadata endpoints by hostname.
+		$metadata_hosts = array(
+			'metadata.google.internal',
+			'metadata.google.com',
+		);
+		if ( in_array( strtolower( $host ), $metadata_hosts, true ) ) {
+			return new WP_Error(
+				'metadata_endpoint_blocked',
+				'Cloud metadata endpoints are not allowed.',
+				array( 'status' => 403 )
+			);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check whether an IP address falls within any blocked internal range.
+	 *
+	 * @param string $ip IPv4 or IPv6 address.
+	 * @return bool True if the IP is internal/private/reserved.
+	 */
+	private static function is_internal_ip( $ip ) {
+		// Use PHP's built-in filter for IPv4 private/reserved ranges.
+		if ( false === filter_var(
+			$ip,
+			FILTER_VALIDATE_IP,
+			FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+		) ) {
+			return true;
+		}
+
+		// Additional CIDR checks for ranges not covered by PHP's filter flags.
+		foreach ( self::BLOCKED_IP_RANGES as $cidr ) {
+			if ( self::ip_in_cidr( $ip, $cidr ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if an IP address is within a CIDR range.
+	 *
+	 * @param string $ip   The IP address to check.
+	 * @param string $cidr The CIDR range (e.g. '10.0.0.0/8').
+	 * @return bool
+	 */
+	private static function ip_in_cidr( $ip, $cidr ) {
+		list( $subnet, $mask_bits ) = explode( '/', $cidr );
+
+		// IPv6 check.
+		if ( false !== strpos( $subnet, ':' ) ) {
+			$ip_bin     = inet_pton( $ip );
+			$subnet_bin = inet_pton( $subnet );
+			if ( false === $ip_bin || false === $subnet_bin ) {
+				return false;
+			}
+			if ( strlen( $ip_bin ) !== strlen( $subnet_bin ) ) {
+				return false; // Mismatched address families.
+			}
+			$mask_bits = (int) $mask_bits;
+			$full_bytes = intdiv( $mask_bits, 8 );
+			$remaining  = $mask_bits % 8;
+			for ( $i = 0; $i < $full_bytes; $i++ ) {
+				if ( $ip_bin[ $i ] !== $subnet_bin[ $i ] ) {
+					return false;
+				}
+			}
+			if ( $remaining > 0 && $full_bytes < strlen( $ip_bin ) ) {
+				$mask_byte = 0xFF << ( 8 - $remaining ) & 0xFF;
+				if ( ( ord( $ip_bin[ $full_bytes ] ) & $mask_byte ) !== ( ord( $subnet_bin[ $full_bytes ] ) & $mask_byte ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		// IPv4 check.
+		$ip_long     = ip2long( $ip );
+		$subnet_long = ip2long( $subnet );
+		if ( false === $ip_long || false === $subnet_long ) {
+			return false;
+		}
+		$mask = -1 << ( 32 - (int) $mask_bits );
+		return ( $ip_long & $mask ) === ( $subnet_long & $mask );
 	}
 }
