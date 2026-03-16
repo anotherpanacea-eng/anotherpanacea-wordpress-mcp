@@ -4,7 +4,7 @@ Tags: mcp, ai, content-management, abilities-api
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPL-2.0-or-later
 
 Registers MCP abilities for full post lifecycle management via the WordPress Abilities API.
@@ -44,6 +44,9 @@ The plugin automatically converts between Markdown (what Claude works with) and 
 4. If you already have MCP Adapter installed standalone, the bundled copy is automatically skipped.
 
 == Changelog ==
+
+= 1.5.2 =
+* Added GitHub-based self-updater for plugin updates via Dashboard > Updates.
 
 = 1.5.1 =
 * Security: upload-media SSRF hardening — validate URL scheme, resolve DNS, block RFC 1918/loopback/link-local/metadata targets.
