@@ -63,36 +63,139 @@ class APMCP_Self_Updater {
 		// Inject update info into the transient that WP checks.
 		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'check_for_update' ) );
 
+		// Also inject when WP reads the transient (belt + suspenders).
+		add_filter( 'site_transient_update_plugins', array( __CLASS__, 'check_for_update' ) );
+
 		// Supply plugin details for the "View details" modal.
 		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 10, 3 );
 
 		// Rename the extracted folder to match our expected plugin slug.
 		add_filter( 'upgrader_source_selection', array( __CLASS__, 'rename_source' ), 10, 4 );
+
+		// When "Check again" is clicked, clear our transient so we re-fetch.
+		add_action( 'load-update-core.php', array( __CLASS__, 'maybe_force_check' ) );
+
+		// Debug REST endpoint (editor+ only).
+		add_action( 'rest_api_init', array( __CLASS__, 'register_debug_endpoint' ) );
+	}
+
+	/**
+	 * Clear the GitHub cache when the user clicks "Check again" on Dashboard > Updates.
+	 */
+	public static function maybe_force_check() {
+		if ( isset( $_GET['force-check'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WP core uses this same pattern in update-core.php without nonce.
+			delete_transient( self::TRANSIENT_KEY );
+		}
+	}
+
+	/**
+	 * Register a debug REST endpoint for testing the updater.
+	 */
+	public static function register_debug_endpoint() {
+		register_rest_route(
+			'apmcp/v1',
+			'/updater-debug',
+			array(
+				'methods'             => 'GET',
+				'callback'            => array( __CLASS__, 'debug_endpoint' ),
+				'permission_callback' => function () {
+					return current_user_can( 'update_plugins' );
+				},
+			)
+		);
+	}
+
+	/**
+	 * Debug endpoint: show updater state without caching.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public static function debug_endpoint() {
+		$cached_raw = get_transient( self::TRANSIENT_KEY );
+
+		// Make a fresh GitHub API call (bypass cache).
+		$url      = sprintf( 'https://api.github.com/repos/%s/releases/latest', self::GITHUB_REPO );
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout' => 10,
+				'headers' => array(
+					'Accept'     => 'application/vnd.github.v3+json',
+					'User-Agent' => 'AnotherPanacea-MCP/' . APMCP_VERSION . ' WordPress/' . get_bloginfo( 'version' ),
+				),
+			)
+		);
+
+		$github_error   = null;
+		$github_code    = null;
+		$github_release = null;
+
+		if ( is_wp_error( $response ) ) {
+			$github_error = $response->get_error_message();
+		} else {
+			$github_code = wp_remote_retrieve_response_code( $response );
+			$body        = json_decode( wp_remote_retrieve_body( $response ), true );
+			if ( is_array( $body ) ) {
+				$github_release = array(
+					'tag_name'     => $body['tag_name'] ?? null,
+					'published_at' => $body['published_at'] ?? null,
+					'zipball_url'  => $body['zipball_url'] ?? null,
+				);
+			}
+		}
+
+		$remote_version = null;
+		if ( $github_release && ! empty( $github_release['tag_name'] ) ) {
+			$remote_version = ltrim( $github_release['tag_name'], 'v' );
+		}
+
+		return new WP_REST_Response(
+			array(
+				'plugin_basename'  => self::$plugin_basename,
+				'installed_version' => APMCP_VERSION,
+				'cached_transient' => $cached_raw,
+				'github_api_error' => $github_error,
+				'github_http_code' => $github_code,
+				'github_release'   => $github_release,
+				'remote_version'   => $remote_version,
+				'update_available' => $remote_version ? version_compare( $remote_version, APMCP_VERSION, '>' ) : null,
+			),
+			200
+		);
 	}
 
 	/**
 	 * Check GitHub for a newer release and inject into the update transient.
 	 *
-	 * Called by WordPress whenever it rebuilds the update_plugins transient,
-	 * including when the user clicks "Check again" on Dashboard > Updates.
+	 * Called by WordPress whenever it rebuilds or reads the update_plugins transient.
 	 *
 	 * @param object $transient The update_plugins transient object.
 	 * @return object Modified transient with our update data (if newer).
 	 */
 	public static function check_for_update( $transient ) {
-		if ( empty( $transient->checked ) ) {
+		if ( ! is_object( $transient ) ) {
 			return $transient;
 		}
 
+		// On the 'site_transient_update_plugins' filter, checked may not be set.
+		// Fall back to APMCP_VERSION directly.
 		$release = self::get_latest_release();
 		if ( null === $release ) {
 			return $transient;
 		}
 
 		$remote_version = ltrim( $release['tag_name'], 'v' );
-		$current        = $transient->checked[ self::$plugin_basename ] ?? APMCP_VERSION;
+		$current        = APMCP_VERSION;
+
+		// If checked is available, prefer it (may be more up-to-date).
+		if ( ! empty( $transient->checked ) && isset( $transient->checked[ self::$plugin_basename ] ) ) {
+			$current = $transient->checked[ self::$plugin_basename ];
+		}
 
 		if ( version_compare( $remote_version, $current, '>' ) ) {
+			if ( ! isset( $transient->response ) || ! is_array( $transient->response ) ) {
+				$transient->response = array();
+			}
 			$transient->response[ self::$plugin_basename ] = (object) array(
 				'slug'        => dirname( self::$plugin_basename ),
 				'plugin'      => self::$plugin_basename,
