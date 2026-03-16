@@ -378,7 +378,7 @@ class APMCP_Upload_Media {
 			if ( strlen( $ip_bin ) !== strlen( $subnet_bin ) ) {
 				return false; // Mismatched address families.
 			}
-			$mask_bits = (int) $mask_bits;
+			$mask_bits  = (int) $mask_bits;
 			$full_bytes = intdiv( $mask_bits, 8 );
 			$remaining  = $mask_bits % 8;
 			for ( $i = 0; $i < $full_bytes; $i++ ) {
