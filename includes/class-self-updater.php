@@ -151,14 +151,14 @@ class APMCP_Self_Updater {
 
 		return new WP_REST_Response(
 			array(
-				'plugin_basename'  => self::$plugin_basename,
+				'plugin_basename'   => self::$plugin_basename,
 				'installed_version' => APMCP_VERSION,
-				'cached_transient' => $cached_raw,
-				'github_api_error' => $github_error,
-				'github_http_code' => $github_code,
-				'github_release'   => $github_release,
-				'remote_version'   => $remote_version,
-				'update_available' => $remote_version ? version_compare( $remote_version, APMCP_VERSION, '>' ) : null,
+				'cached_transient'  => $cached_raw,
+				'github_api_error'  => $github_error,
+				'github_http_code'  => $github_code,
+				'github_release'    => $github_release,
+				'remote_version'    => $remote_version,
+				'update_available'  => $remote_version ? version_compare( $remote_version, APMCP_VERSION, '>' ) : null,
 			),
 			200
 		);
@@ -236,19 +236,19 @@ class APMCP_Self_Updater {
 		$remote_version = ltrim( $release['tag_name'], 'v' );
 
 		return (object) array(
-			'name'            => 'AnotherPanacea MCP',
-			'slug'            => $slug,
-			'version'         => $remote_version,
-			'author'          => '<a href="https://anotherpanacea.com">Joshua Miller</a>',
-			'homepage'        => 'https://github.com/' . self::GITHUB_REPO,
-			'requires'        => '6.9',
-			'requires_php'    => '7.4',
-			'download_link'   => $release['zipball_url'],
-			'sections'        => array(
-				'description'  => 'MCP abilities for WordPress post lifecycle management.',
-				'changelog'    => self::format_changelog( $release['body'] ?? '' ),
+			'name'          => 'AnotherPanacea MCP',
+			'slug'          => $slug,
+			'version'       => $remote_version,
+			'author'        => '<a href="https://anotherpanacea.com">Joshua Miller</a>',
+			'homepage'      => 'https://github.com/' . self::GITHUB_REPO,
+			'requires'      => '6.9',
+			'requires_php'  => '7.4',
+			'download_link' => $release['zipball_url'],
+			'sections'      => array(
+				'description' => 'MCP abilities for WordPress post lifecycle management.',
+				'changelog'   => self::format_changelog( $release['body'] ?? '' ),
 			),
-			'last_updated'    => $release['published_at'] ?? '',
+			'last_updated'  => $release['published_at'] ?? '',
 		);
 	}
 
