@@ -22,7 +22,7 @@ class APMCP_Create_Theme {
 			'anotherpanacea-mcp/create-theme',
 			array(
 				'label'               => __( 'Create Theme', 'anotherpanacea-mcp' ),
-				'description'         => __( 'Scaffold a new block theme with required files (style.css, templates/index.html), theme.json with design tokens, starter template parts (header, footer), and empty directories for patterns, styles, and assets.', 'anotherpanacea-mcp' ),
+				'description'         => __( 'Scaffold a new block theme (standalone or child). Standalone: required files, theme.json with design tokens, starter templates/parts, empty pattern/style/asset directories. Child: minimal override files inheriting from a parent theme.', 'anotherpanacea-mcp' ),
 				'category'            => 'anotherpanacea-mcp',
 				'input_schema'        => array(
 					'type'       => 'object',
@@ -52,9 +52,13 @@ class APMCP_Create_Theme {
 							'type'        => 'string',
 							'description' => 'Theme version. Default: 1.0.0.',
 						),
+						'parent'      => array(
+							'type'        => 'string',
+							'description' => 'Parent theme stylesheet to create a child theme. The child inherits all templates, parts, and styles from the parent. Only override files you include will be created.',
+						),
 						'theme_json'  => array(
 							'type'        => 'object',
-							'description' => 'Custom theme.json contents. If omitted, a sensible default is generated with common design tokens.',
+							'description' => 'Custom theme.json contents. If omitted, a sensible default is generated (standalone) or a minimal inheriting config (child theme).',
 						),
 						'dry_run'     => array(
 							'type'        => 'boolean',
@@ -108,6 +112,7 @@ class APMCP_Create_Theme {
 		$author      = sanitize_text_field( $input['author'] ?? '' );
 		$author_uri  = esc_url_raw( $input['author_uri'] ?? '' );
 		$version     = sanitize_text_field( $input['version'] ?? '1.0.0' );
+		$parent_slug = sanitize_file_name( $input['parent'] ?? '' );
 		$dry_run     = ! empty( $input['dry_run'] );
 
 		if ( empty( $slug ) || empty( $name ) ) {
@@ -119,6 +124,14 @@ class APMCP_Create_Theme {
 			return new WP_Error( 'invalid_slug', 'Slug must be lowercase alphanumeric with hyphens, not starting or ending with a hyphen.', array( 'status' => 400 ) );
 		}
 
+		// Validate parent theme exists if specified.
+		if ( ! empty( $parent_slug ) ) {
+			$parent_theme = wp_get_theme( $parent_slug );
+			if ( ! $parent_theme->exists() ) {
+				return new WP_Error( 'parent_not_found', "Parent theme '{$parent_slug}' not found.", array( 'status' => 404 ) );
+			}
+		}
+
 		$theme_root = get_theme_root();
 		$theme_dir  = $theme_root . '/' . $slug;
 
@@ -128,7 +141,11 @@ class APMCP_Create_Theme {
 		}
 
 		// Build the file manifest.
-		$files = self::build_manifest( $slug, $name, $description, $author, $author_uri, $version, $input['theme_json'] ?? null );
+		if ( ! empty( $parent_slug ) ) {
+			$files = self::build_child_manifest( $slug, $name, $description, $author, $author_uri, $version, $parent_slug, $input['theme_json'] ?? null );
+		} else {
+			$files = self::build_manifest( $slug, $name, $description, $author, $author_uri, $version, $input['theme_json'] ?? null );
+		}
 
 		if ( $dry_run ) {
 			return array(
@@ -451,6 +468,117 @@ class APMCP_Create_Theme {
 				'== Description ==',
 				'',
 				! empty( $description ) ? $description : 'A custom block theme.',
+				'',
+				'== Changelog ==',
+				'',
+				"= {$version} =",
+				'* Initial release.',
+				'',
+			)
+		);
+
+		return $files;
+	}
+
+	/**
+	 * Build the file manifest for a child block theme.
+	 *
+	 * Child themes inherit templates, parts, and styles from the parent.
+	 * Only a minimal set of files is created; override files can be added
+	 * later via update-theme-file.
+	 *
+	 * @param string     $slug        Theme slug.
+	 * @param string     $name        Theme name.
+	 * @param string     $description Theme description.
+	 * @param string     $author      Author name.
+	 * @param string     $author_uri  Author URI.
+	 * @param string     $version     Theme version.
+	 * @param string     $parent_slug      Parent theme stylesheet.
+	 * @param array|null $custom_json Custom theme.json or null for defaults.
+	 * @return array<string, string> Map of relative path => file content.
+	 */
+	private static function build_child_manifest( $slug, $name, $description, $author, $author_uri, $version, $parent_slug, $custom_json = null ) {
+		$files = array();
+
+		// style.css (required — theme header with Template line).
+		$header_lines = array(
+			'/*',
+			"Theme Name: {$name}",
+			"Template: {$parent_slug}",
+		);
+		if ( ! empty( $description ) ) {
+			$header_lines[] = "Description: {$description}";
+		}
+		if ( ! empty( $author ) ) {
+			$header_lines[] = "Author: {$author}";
+		}
+		if ( ! empty( $author_uri ) ) {
+			$header_lines[] = "Author URI: {$author_uri}";
+		}
+		$header_lines[] = "Version: {$version}";
+		$header_lines[] = 'Requires at least: 6.4';
+		$header_lines[] = 'Tested up to: 6.9';
+		$header_lines[] = 'Requires PHP: 7.4';
+		$header_lines[] = "Text Domain: {$slug}";
+		$header_lines[] = 'License: GPL-2.0-or-later';
+		$header_lines[] = '*/';
+		$header_lines[] = '';
+
+		$files['style.css'] = implode( "\n", $header_lines );
+
+		// theme.json — inherits from parent, only overrides what's specified.
+		if ( null !== $custom_json ) {
+			$files['theme.json'] = wp_json_encode( $custom_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
+		} else {
+			$child_json          = array(
+				'$schema'  => 'https://schemas.wp.org/wp/6.9/theme.json',
+				'version'  => 3,
+				'settings' => array(
+					'appearanceTools' => true,
+				),
+				'styles'   => array(),
+			);
+			$files['theme.json'] = wp_json_encode( $child_json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) . "\n";
+		}
+
+		// functions.php (minimal — enqueue parent + child styles).
+		$func_prefix            = str_replace( '-', '_', $slug );
+		$files['functions.php'] = implode(
+			"\n",
+			array(
+				'<?php',
+				'/**',
+				" * {$name} functions and definitions.",
+				' *',
+				" * @package {$slug}",
+				' */',
+				'',
+				"if ( ! defined( 'ABSPATH' ) ) {",
+				'	exit;',
+				'}',
+				'',
+				'/**',
+				' * Enqueue parent and child theme styles.',
+				' */',
+				"function {$func_prefix}_enqueue_styles() {",
+				"	wp_enqueue_style( '{$parent_slug}-style', get_template_directory_uri() . '/style.css', array(), wp_get_theme()->parent()->get( 'Version' ) );",
+				"	wp_enqueue_style( '{$slug}-style', get_stylesheet_uri(), array( '{$parent_slug}-style' ), wp_get_theme()->get( 'Version' ) );",
+				'}',
+				"add_action( 'wp_enqueue_scripts', '{$func_prefix}_enqueue_styles' );",
+				'',
+			)
+		);
+
+		// README.txt.
+		$parent_name         = wp_get_theme( $parent_slug )->get( 'Name' );
+		$files['README.txt'] = implode(
+			"\n",
+			array(
+				"=== {$name} ===",
+				'',
+				'== Description ==',
+				'',
+				! empty( $description ) ? $description : "A child theme of {$parent_name}.",
 				'',
 				'== Changelog ==',
 				'',
