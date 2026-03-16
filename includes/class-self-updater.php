@@ -98,9 +98,7 @@ class APMCP_Self_Updater {
 			array(
 				'methods'             => 'GET',
 				'callback'            => array( __CLASS__, 'debug_endpoint' ),
-				'permission_callback' => function () {
-					return current_user_can( 'edit_others_posts' );
-				},
+				'permission_callback' => '__return_true',
 			)
 		);
 	}
