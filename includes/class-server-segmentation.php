@@ -38,6 +38,9 @@ class APMCP_Server_Segmentation {
 		'anotherpanacea-mcp/search-media',
 		'anotherpanacea-mcp/search-comments',
 		'anotherpanacea-mcp/audit-post',
+		'anotherpanacea-mcp/list-themes',
+		'anotherpanacea-mcp/get-theme-info',
+		'anotherpanacea-mcp/get-theme-file',
 	);
 
 	/**
@@ -64,6 +67,10 @@ class APMCP_Server_Segmentation {
 		'anotherpanacea-mcp/delete-post',
 		'anotherpanacea-mcp/delete-comment',
 		'anotherpanacea-mcp/list-audit-log',
+		'anotherpanacea-mcp/create-theme',
+		'anotherpanacea-mcp/update-theme-file',
+		'anotherpanacea-mcp/delete-theme-file',
+		'anotherpanacea-mcp/activate-theme',
 	);
 
 	/**

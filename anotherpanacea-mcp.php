@@ -2,7 +2,7 @@
 /**
  * Plugin Name: AnotherPanacea MCP
  * Description: Registers MCP abilities for content management via the WordPress Abilities API and MCP Adapter.
- * Version:     1.5.6
+ * Version:     1.6.0
  * Author:      Joshua Miller
  * License:     GPL-2.0-or-later
  * Requires at least: 6.9
@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'APMCP_VERSION', '1.5.6' );
+define( 'APMCP_VERSION', '1.6.0' );
 define( 'APMCP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'APMCP_BUNDLED_MCP_ADAPTER_VERSION', '0.4.1' );
 
@@ -77,6 +77,13 @@ require_once APMCP_DIR . 'includes/class-get-blocks.php';
 require_once APMCP_DIR . 'includes/class-update-blocks.php';
 require_once APMCP_DIR . 'includes/class-audit-post.php';
 require_once APMCP_DIR . 'includes/class-repair-post.php';
+require_once APMCP_DIR . 'includes/class-list-themes.php';
+require_once APMCP_DIR . 'includes/class-get-theme-info.php';
+require_once APMCP_DIR . 'includes/class-get-theme-file.php';
+require_once APMCP_DIR . 'includes/class-create-theme.php';
+require_once APMCP_DIR . 'includes/class-update-theme-file.php';
+require_once APMCP_DIR . 'includes/class-delete-theme-file.php';
+require_once APMCP_DIR . 'includes/class-activate-theme.php';
 require_once APMCP_DIR . 'includes/class-server-segmentation.php';
 require_once APMCP_DIR . 'includes/class-self-updater.php';
 
@@ -156,6 +163,15 @@ function apmcp_register_abilities() {
 	APMCP_Resource_Taxonomy_Map::register();
 	APMCP_Resource_Recent_Drafts::register();
 	APMCP_Resource_Site_Info::register();
+
+	// Theme abilities.
+	APMCP_List_Themes::register();
+	APMCP_Get_Theme_Info::register();
+	APMCP_Get_Theme_File::register();
+	APMCP_Create_Theme::register();
+	APMCP_Update_Theme_File::register();
+	APMCP_Delete_Theme_File::register();
+	APMCP_Activate_Theme::register();
 
 	// MCP prompts.
 	APMCP_Prompt_Draft_Post::register();
