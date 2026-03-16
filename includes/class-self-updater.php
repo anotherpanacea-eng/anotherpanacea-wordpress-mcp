@@ -39,6 +39,13 @@ class APMCP_Self_Updater {
 	const CACHE_DURATION = 43200;
 
 	/**
+	 * Failure cache duration in seconds (30 minutes).
+	 *
+	 * @var int
+	 */
+	const FAILURE_CACHE_DURATION = 1800;
+
+	/**
 	 * Plugin basename (e.g. "anotherpanacea-mcp/anotherpanacea-mcp.php").
 	 *
 	 * @var string
@@ -187,8 +194,15 @@ class APMCP_Self_Updater {
 	 */
 	private static function get_latest_release() {
 		$cached = get_transient( self::TRANSIENT_KEY );
-		if ( false !== $cached ) {
+
+		// Valid cached release data (must be an array with tag_name).
+		if ( is_array( $cached ) && ! empty( $cached['tag_name'] ) ) {
 			return $cached;
+		}
+
+		// Cached failure marker — don't retry until transient expires.
+		if ( 'failed' === $cached ) {
+			return null;
 		}
 
 		$url      = sprintf( 'https://api.github.com/repos/%s/releases/latest', self::GITHUB_REPO );
@@ -203,15 +217,26 @@ class APMCP_Self_Updater {
 			)
 		);
 
-		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
-			// Cache the failure briefly (30 min) to avoid hammering GitHub.
-			set_transient( self::TRANSIENT_KEY, null, 1800 );
+		if ( is_wp_error( $response ) ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug logging for self-updater.
+			error_log( 'APMCP self-updater: GitHub API error — ' . $response->get_error_message() );
+			set_transient( self::TRANSIENT_KEY, 'failed', self::FAILURE_CACHE_DURATION );
+			return null;
+		}
+
+		$code = wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $code ) {
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug logging for self-updater.
+			error_log( 'APMCP self-updater: GitHub API HTTP ' . $code . ' — ' . wp_remote_retrieve_body( $response ) );
+			set_transient( self::TRANSIENT_KEY, 'failed', self::FAILURE_CACHE_DURATION );
 			return null;
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $body ) || empty( $body['tag_name'] ) ) {
-			set_transient( self::TRANSIENT_KEY, null, 1800 );
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Intentional debug logging for self-updater.
+			error_log( 'APMCP self-updater: unexpected GitHub API response body.' );
+			set_transient( self::TRANSIENT_KEY, 'failed', self::FAILURE_CACHE_DURATION );
 			return null;
 		}
 
