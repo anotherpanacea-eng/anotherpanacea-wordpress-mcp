@@ -1,0 +1,253 @@
+<?php
+/**
+ * Self-updater: Check GitHub releases for plugin updates.
+ *
+ * Hooks into the WordPress plugin update system so the plugin can update
+ * itself from GitHub releases without a third-party updater plugin.
+ *
+ * @package AnotherPanacea_MCP
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Checks GitHub releases for newer versions and integrates with WP plugin updates.
+ */
+class APMCP_Self_Updater {
+
+	/**
+	 * GitHub repository in "owner/repo" format.
+	 *
+	 * @var string
+	 */
+	const GITHUB_REPO = 'anotherpanacea-eng/anotherpanacea-wordpress-mcp';
+
+	/**
+	 * Transient key for caching the GitHub API response.
+	 *
+	 * @var string
+	 */
+	const TRANSIENT_KEY = 'apmcp_github_update_check';
+
+	/**
+	 * Cache duration in seconds (12 hours).
+	 *
+	 * @var int
+	 */
+	const CACHE_DURATION = 43200;
+
+	/**
+	 * Plugin basename (e.g. "anotherpanacea-mcp/anotherpanacea-mcp.php").
+	 *
+	 * @var string
+	 */
+	private static $plugin_basename = null;
+
+	/**
+	 * Initialize the updater hooks.
+	 *
+	 * @param string $plugin_file Main plugin file path (__FILE__ from the bootstrap).
+	 */
+	public static function init( $plugin_file ) {
+		self::$plugin_basename = plugin_basename( $plugin_file );
+
+		// Inject update info into the transient that WP checks.
+		add_filter( 'pre_set_site_transient_update_plugins', array( __CLASS__, 'check_for_update' ) );
+
+		// Supply plugin details for the "View details" modal.
+		add_filter( 'plugins_api', array( __CLASS__, 'plugin_info' ), 10, 3 );
+
+		// Rename the extracted folder to match our expected plugin slug.
+		add_filter( 'upgrader_source_selection', array( __CLASS__, 'rename_source' ), 10, 4 );
+	}
+
+	/**
+	 * Check GitHub for a newer release and inject into the update transient.
+	 *
+	 * Called by WordPress whenever it rebuilds the update_plugins transient,
+	 * including when the user clicks "Check again" on Dashboard > Updates.
+	 *
+	 * @param object $transient The update_plugins transient object.
+	 * @return object Modified transient with our update data (if newer).
+	 */
+	public static function check_for_update( $transient ) {
+		if ( empty( $transient->checked ) ) {
+			return $transient;
+		}
+
+		$release = self::get_latest_release();
+		if ( null === $release ) {
+			return $transient;
+		}
+
+		$remote_version = ltrim( $release['tag_name'], 'v' );
+		$current        = $transient->checked[ self::$plugin_basename ] ?? APMCP_VERSION;
+
+		if ( version_compare( $remote_version, $current, '>' ) ) {
+			$transient->response[ self::$plugin_basename ] = (object) array(
+				'slug'        => dirname( self::$plugin_basename ),
+				'plugin'      => self::$plugin_basename,
+				'new_version' => $remote_version,
+				'url'         => $release['html_url'],
+				'package'     => $release['zipball_url'],
+				'icons'       => array(),
+				'banners'     => array(),
+			);
+		}
+
+		return $transient;
+	}
+
+	/**
+	 * Supply plugin info for the "View version details" modal.
+	 *
+	 * @param false|object|array $result The result object or array. Default false.
+	 * @param string             $action The type of information being requested.
+	 * @param object             $args   Plugin API arguments.
+	 * @return false|object
+	 */
+	public static function plugin_info( $result, $action, $args ) {
+		if ( 'plugin_information' !== $action ) {
+			return $result;
+		}
+
+		$slug = $args->slug ?? '';
+		if ( dirname( self::$plugin_basename ) !== $slug ) {
+			return $result;
+		}
+
+		$release = self::get_latest_release();
+		if ( null === $release ) {
+			return $result;
+		}
+
+		$remote_version = ltrim( $release['tag_name'], 'v' );
+
+		return (object) array(
+			'name'            => 'AnotherPanacea MCP',
+			'slug'            => $slug,
+			'version'         => $remote_version,
+			'author'          => '<a href="https://anotherpanacea.com">Joshua Miller</a>',
+			'homepage'        => 'https://github.com/' . self::GITHUB_REPO,
+			'requires'        => '6.9',
+			'requires_php'    => '7.4',
+			'download_link'   => $release['zipball_url'],
+			'sections'        => array(
+				'description'  => 'MCP abilities for WordPress post lifecycle management.',
+				'changelog'    => self::format_changelog( $release['body'] ?? '' ),
+			),
+			'last_updated'    => $release['published_at'] ?? '',
+		);
+	}
+
+	/**
+	 * Rename the extracted GitHub zip folder to the expected plugin directory name.
+	 *
+	 * GitHub's zipball extracts to "owner-repo-hash/". WordPress expects "anotherpanacea-mcp/".
+	 *
+	 * @param string       $source        Path to the extracted source directory.
+	 * @param string       $remote_source Path to the remote source (unused).
+	 * @param WP_Upgrader  $upgrader      The upgrader instance.
+	 * @param array        $hook_extra    Extra arguments from the upgrader.
+	 * @return string|WP_Error Corrected source path or WP_Error on failure.
+	 */
+	public static function rename_source( $source, $remote_source, $upgrader, $hook_extra ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+		// Only act on our own plugin updates.
+		$plugin = $hook_extra['plugin'] ?? '';
+		if ( self::$plugin_basename !== $plugin ) {
+			return $source;
+		}
+
+		$expected_slug = dirname( self::$plugin_basename );
+		$corrected     = trailingslashit( dirname( $source ) ) . $expected_slug . '/';
+
+		if ( $source === $corrected ) {
+			return $source;
+		}
+
+		// Rename the directory.
+		$moved = rename( $source, $corrected );
+		if ( ! $moved ) {
+			return new WP_Error(
+				'rename_failed',
+				sprintf( 'Could not rename %s to %s.', $source, $corrected ),
+				array( 'status' => 500 )
+			);
+		}
+
+		return $corrected;
+	}
+
+	/**
+	 * Fetch the latest release from GitHub, with transient caching.
+	 *
+	 * @return array|null Release data array, or null on failure.
+	 */
+	private static function get_latest_release() {
+		$cached = get_transient( self::TRANSIENT_KEY );
+		if ( false !== $cached ) {
+			return $cached;
+		}
+
+		$url      = sprintf( 'https://api.github.com/repos/%s/releases/latest', self::GITHUB_REPO );
+		$response = wp_remote_get(
+			$url,
+			array(
+				'timeout' => 10,
+				'headers' => array(
+					'Accept'     => 'application/vnd.github.v3+json',
+					'User-Agent' => 'AnotherPanacea-MCP/' . APMCP_VERSION . ' WordPress/' . get_bloginfo( 'version' ),
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			// Cache the failure briefly (30 min) to avoid hammering GitHub.
+			set_transient( self::TRANSIENT_KEY, null, 1800 );
+			return null;
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( ! is_array( $body ) || empty( $body['tag_name'] ) ) {
+			set_transient( self::TRANSIENT_KEY, null, 1800 );
+			return null;
+		}
+
+		$release = array(
+			'tag_name'     => $body['tag_name'],
+			'html_url'     => $body['html_url'] ?? '',
+			'zipball_url'  => $body['zipball_url'] ?? '',
+			'body'         => $body['body'] ?? '',
+			'published_at' => $body['published_at'] ?? '',
+		);
+
+		set_transient( self::TRANSIENT_KEY, $release, self::CACHE_DURATION );
+
+		return $release;
+	}
+
+	/**
+	 * Convert GitHub release notes (Markdown) to basic HTML for the details modal.
+	 *
+	 * @param string $markdown Release body text.
+	 * @return string Simple HTML.
+	 */
+	private static function format_changelog( $markdown ) {
+		if ( empty( $markdown ) ) {
+			return '<p>No changelog provided.</p>';
+		}
+
+		// Minimal Markdown-to-HTML: headings, bold, lists, line breaks.
+		$html = esc_html( $markdown );
+		$html = preg_replace( '/^### (.+)$/m', '<h4>$1</h4>', $html );
+		$html = preg_replace( '/^## (.+)$/m', '<h3>$1</h3>', $html );
+		$html = preg_replace( '/\*\*(.+?)\*\*/', '<strong>$1</strong>', $html );
+		$html = preg_replace( '/^[-*] (.+)$/m', '<li>$1</li>', $html );
+		$html = preg_replace( '/(<li>.*<\/li>\n?)+/', '<ul>$0</ul>', $html );
+		$html = nl2br( $html );
+
+		return $html;
+	}
+}

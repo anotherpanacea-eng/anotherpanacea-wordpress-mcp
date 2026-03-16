@@ -78,6 +78,7 @@ require_once APMCP_DIR . 'includes/class-update-blocks.php';
 require_once APMCP_DIR . 'includes/class-audit-post.php';
 require_once APMCP_DIR . 'includes/class-repair-post.php';
 require_once APMCP_DIR . 'includes/class-server-segmentation.php';
+require_once APMCP_DIR . 'includes/class-self-updater.php';
 
 /**
  * Register the ability category and all abilities.
@@ -91,6 +92,9 @@ register_activation_hook( __FILE__, array( 'APMCP_Audit_Log', 'create_table' ) )
 
 // Server segmentation: register reader, editorial, and full MCP surfaces.
 APMCP_Server_Segmentation::init();
+
+// Self-updater: check GitHub releases for plugin updates.
+APMCP_Self_Updater::init( __FILE__ );
 
 /**
  * Register the AnotherPanacea MCP ability category.
