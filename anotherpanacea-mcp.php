@@ -184,14 +184,83 @@ function apmcp_register_compat_route() {
 /**
  * Forward the request to the real MCP Adapter endpoint.
  *
+ * Sets audit context when the JSON-RPC call is a tools/call so that
+ * audit log entries record the real MCP ability name even on the
+ * default/compat route (which bypasses the segmented server wrappers).
+ *
  * @param WP_REST_Request $request The incoming request.
  * @return WP_REST_Response|WP_Error
  */
 function apmcp_proxy_to_mcp_adapter( $request ) {
+	apmcp_set_audit_context_from_jsonrpc( $request->get_body() );
+
 	$internal = new WP_REST_Request( $request->get_method(), '/mcp/mcp-adapter-default-server' );
 	$internal->set_headers( $request->get_headers() );
 	$internal->set_body( $request->get_body() );
 	$internal->set_query_params( $request->get_query_params() );
 
-	return rest_do_request( $internal );
+	$response = rest_do_request( $internal );
+
+	if ( class_exists( 'APMCP_Audit_Log' ) ) {
+		APMCP_Audit_Log::clear_context();
+	}
+
+	return $response;
+}
+
+/**
+ * Hook into the default MCP Adapter server route to set audit context.
+ *
+ * This catches direct requests to /mcp/mcp-adapter-default-server that
+ * don't go through the /wp/v2/wpmcp compat proxy.
+ */
+add_action( 'rest_api_init', 'apmcp_hook_default_mcp_audit_context' );
+
+/**
+ * Register a filter on rest_pre_dispatch to set audit context for the default MCP server.
+ */
+function apmcp_hook_default_mcp_audit_context() {
+	add_filter( 'rest_pre_dispatch', 'apmcp_default_server_audit_context', 10, 3 );
+}
+
+/**
+ * Set audit context for MCP requests on the default adapter server route.
+ *
+ * @param mixed           $result  Pre-dispatch result (null to continue).
+ * @param WP_REST_Server  $server  The REST server instance.
+ * @param WP_REST_Request $request The incoming request.
+ * @return mixed Unmodified $result (passthrough).
+ */
+function apmcp_default_server_audit_context( $result, $server, $request ) {
+	$route = $request->get_route();
+	if ( '/mcp/mcp-adapter-default-server' === $route && 'POST' === $request->get_method() ) {
+		apmcp_set_audit_context_from_jsonrpc( $request->get_body() );
+	}
+	return $result;
+}
+
+/**
+ * Parse a JSON-RPC request body and set audit context if it's a tools/call.
+ *
+ * @param string $body Raw request body.
+ */
+function apmcp_set_audit_context_from_jsonrpc( $body ) {
+	if ( ! class_exists( 'APMCP_Audit_Log' ) || empty( $body ) ) {
+		return;
+	}
+
+	$decoded = json_decode( $body, true );
+	if ( ! is_array( $decoded ) ) {
+		return;
+	}
+
+	$method = $decoded['method'] ?? '';
+	if ( 'tools/call' !== $method ) {
+		return;
+	}
+
+	$ability_name = $decoded['params']['name'] ?? '';
+	if ( ! empty( $ability_name ) ) {
+		APMCP_Audit_Log::set_context( $ability_name, 'default' );
+	}
 }

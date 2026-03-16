@@ -4,7 +4,7 @@ Tags: mcp, ai, content-management, abilities-api
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPL-2.0-or-later
 
 Registers MCP abilities for full post lifecycle management via the WordPress Abilities API.
