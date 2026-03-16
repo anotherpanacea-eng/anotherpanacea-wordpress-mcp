@@ -51,7 +51,7 @@ class APMCP_Upload_Media {
 		'::1/128',         // IPv6 loopback.
 		'fc00::/7',        // IPv6 ULA.
 		'fe80::/10',       // IPv6 link-local.
-	)
+	);
 
 	/**
 	 * Register the upload-media ability.
