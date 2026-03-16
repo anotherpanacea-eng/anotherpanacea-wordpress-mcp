@@ -214,8 +214,8 @@ class APMCP_Self_Updater {
 	 * Supply plugin info for the "View version details" modal.
 	 *
 	 * @param false|object|array $result The result object or array. Default false.
-	 * @param string            $action The type of information being requested.
-	 * @param object            $args   Plugin API arguments.
+	 * @param string             $action The type of information being requested.
+	 * @param object             $args   Plugin API arguments.
 	 * @return false|object
 	 */
 	public static function plugin_info( $result, $action, $args ) {
