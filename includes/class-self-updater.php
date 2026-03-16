@@ -214,8 +214,8 @@ class APMCP_Self_Updater {
 	 * Supply plugin info for the "View version details" modal.
 	 *
 	 * @param false|object|array $result The result object or array. Default false.
-	 * @param string             $action The type of information being requested.
-	 * @param object             $args   Plugin API arguments.
+	 * @param string            $action The type of information being requested.
+	 * @param object            $args   Plugin API arguments.
 	 * @return false|object
 	 */
 	public static function plugin_info( $result, $action, $args ) {
@@ -257,10 +257,10 @@ class APMCP_Self_Updater {
 	 *
 	 * GitHub's zipball extracts to "owner-repo-hash/". WordPress expects "anotherpanacea-mcp/".
 	 *
-	 * @param string       $source        Path to the extracted source directory.
-	 * @param string       $remote_source Path to the remote source (unused).
-	 * @param WP_Upgrader  $upgrader      The upgrader instance.
-	 * @param array        $hook_extra    Extra arguments from the upgrader.
+	 * @param string      $source        Path to the extracted source directory.
+	 * @param string      $remote_source Path to the remote source (unused).
+	 * @param WP_Upgrader $upgrader      The upgrader instance.
+	 * @param array       $hook_extra    Extra arguments from the upgrader.
 	 * @return string|WP_Error Corrected source path or WP_Error on failure.
 	 */
 	public static function rename_source( $source, $remote_source, $upgrader, $hook_extra ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
@@ -277,8 +277,13 @@ class APMCP_Self_Updater {
 			return $source;
 		}
 
-		// Rename the directory.
-		$moved = rename( $source, $corrected );
+		// Rename the directory using WP_Filesystem.
+		global $wp_filesystem;
+		if ( ! function_exists( 'WP_Filesystem' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+		}
+		WP_Filesystem();
+		$moved = $wp_filesystem->move( $source, $corrected );
 		if ( ! $moved ) {
 			return new WP_Error(
 				'rename_failed',
