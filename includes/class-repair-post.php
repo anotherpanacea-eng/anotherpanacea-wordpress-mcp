@@ -29,6 +29,7 @@ class APMCP_Repair_Post {
 		'whitespace-normalize'  => 'Clean up excessive whitespace, &nbsp; artifacts, and blank lines.',
 		'decode-title-entities' => 'Decode HTML entities in the post title.',
 		'strip-empty-tags'      => 'Remove empty HTML tags (<p></p>, <div></div>, etc.).',
+		'replace-dead-links'    => 'Replace dead links with Wayback Machine archived versions where available.',
 	);
 
 	/**
@@ -336,6 +337,20 @@ class APMCP_Repair_Post {
 						'changes'     => $result['details'],
 					);
 					break;
+
+				case 'replace-dead-links':
+					$result = self::repair_dead_links( $content );
+					if ( $result['changed'] ) {
+						$content         = $result['content'];
+						$content_changed = true;
+					}
+					$results[] = array(
+						'operation'   => $op,
+						'status'      => $result['changed'] ? 'applied' : 'no_change',
+						'description' => $result['description'],
+						'changes'     => $result['details'],
+					);
+					break;
 			}
 		}
 
@@ -505,6 +520,92 @@ class APMCP_Repair_Post {
 				? sprintf( 'Removed %d empty HTML tag(s).', $count )
 				: 'No empty tags found.',
 			'details'     => $changed ? array( 'removed_count' => $count ) : null,
+		);
+	}
+
+	/**
+	 * Replace dead links with Wayback Machine archived versions.
+	 *
+	 * Checks each external link, and if dead (HTTP 400+ or connection error),
+	 * looks up the Wayback Machine for an archived copy and replaces the URL.
+	 *
+	 * @param string $content Post content.
+	 * @return array Result with content, changed flag, description, and details.
+	 */
+	private static function repair_dead_links( $content ) {
+		$all_links   = APMCP_Audit_Post::find_all_links( $content );
+		$site_url    = get_site_url();
+		$replaced    = array();
+		$no_archive  = array();
+		$new_content = $content;
+
+		foreach ( $all_links as $url ) {
+			// Skip internal links and non-HTTP schemes.
+			if ( 0 === strpos( $url, $site_url ) ) {
+				continue;
+			}
+			if ( preg_match( '/^(mailto:|tel:|#|javascript:|data:)/i', $url ) ) {
+				continue;
+			}
+			$url_scheme = wp_parse_url( $url, PHP_URL_SCHEME );
+			if ( ! in_array( strtolower( (string) $url_scheme ), array( 'http', 'https' ), true ) ) {
+				continue;
+			}
+
+			// Check if the link is dead.
+			$response = wp_remote_head(
+				$url,
+				array(
+					'timeout'     => 5,
+					'redirection' => 3,
+					'sslverify'   => true,
+				)
+			);
+
+			$is_dead = false;
+			if ( is_wp_error( $response ) ) {
+				$is_dead = true;
+			} else {
+				$status = wp_remote_retrieve_response_code( $response );
+				if ( $status >= 400 ) {
+					$is_dead = true;
+				}
+			}
+
+			if ( ! $is_dead ) {
+				continue;
+			}
+
+			// Look up Wayback Machine.
+			$archive_url = APMCP_Audit_Post::wayback_lookup( $url );
+			if ( $archive_url ) {
+				$new_content = str_replace( $url, $archive_url, $new_content );
+				$replaced[]  = array(
+					'original' => $url,
+					'archive'  => $archive_url,
+				);
+			} else {
+				$no_archive[] = $url;
+			}
+		}
+
+		$changed     = ! empty( $replaced );
+		$description = $changed
+			? sprintf( 'Replaced %d dead link(s) with Wayback Machine archives.', count( $replaced ) )
+			: 'No dead links found, or no archives available.';
+
+		if ( ! empty( $no_archive ) ) {
+			$description .= sprintf( ' %d dead link(s) had no archive available.', count( $no_archive ) );
+		}
+
+		return array(
+			'content'     => $new_content,
+			'changed'     => $changed,
+			'description' => $description,
+			'details'     => array(
+				'replaced'   => ! empty( $replaced ) ? $replaced : null,
+				'no_archive' => ! empty( $no_archive ) ? $no_archive : null,
+			),
 		);
 	}
 

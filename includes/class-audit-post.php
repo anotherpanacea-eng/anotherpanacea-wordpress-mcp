@@ -23,6 +23,11 @@ class APMCP_Audit_Post {
 	const DEPRECATED_TAGS = array( 'font', 'center', 'marquee', 'blink', 'strike', 'big', 'small', 'tt', 'u' );
 
 	/**
+	 * Wayback Machine availability API endpoint.
+	 */
+	const WAYBACK_API = 'https://archive.org/wayback/available';
+
+	/**
 	 * Register the audit-post ability.
 	 */
 	public static function register() {
@@ -309,12 +314,30 @@ class APMCP_Audit_Post {
 				}
 			}
 
+			// For each dead link, check Wayback Machine for an archived copy.
+			$archive_found = 0;
+			foreach ( $dead_links as &$dead_link ) {
+				$archive_url = self::wayback_lookup( $dead_link['url'] );
+				if ( $archive_url ) {
+					$dead_link['archive_url'] = $archive_url;
+					$archive_found++;
+				} else {
+					$dead_link['archive_url'] = null;
+				}
+			}
+			unset( $dead_link );
+
 			if ( ! empty( $dead_links ) ) {
+				$fixable = $archive_found > 0;
 				$issues[] = array(
 					'type'         => 'dead_links',
 					'severity'     => 'high',
-					'description'  => sprintf( 'Found %d dead or unreachable link(s).', count( $dead_links ) ),
-					'auto_fixable' => false,
+					'description'  => sprintf(
+						'Found %d dead or unreachable link(s). %d have Wayback Machine archives.',
+						count( $dead_links ),
+						$archive_found
+					),
+					'auto_fixable' => $fixable,
 					'details'      => $dead_links,
 				);
 			}
@@ -431,7 +454,7 @@ class APMCP_Audit_Post {
 	 * @param string $content Post content to scan.
 	 * @return array List of all link URLs found.
 	 */
-	private static function find_all_links( $content ) {
+	public static function find_all_links( $content ) {
 		$urls = array();
 		// HTML href attributes.
 		if ( preg_match_all( '/href="([^"]+)"/i', $content, $matches ) ) {
@@ -444,5 +467,44 @@ class APMCP_Audit_Post {
 		// Image sources (also link targets).
 		$urls = array_merge( $urls, self::find_image_urls( $content ) );
 		return array_unique( $urls );
+	}
+
+	/**
+	 * Check the Wayback Machine for an archived copy of a URL.
+	 *
+	 * Uses the Wayback Availability API which is public, rate-limit-friendly,
+	 * and returns the closest snapshot if available.
+	 *
+	 * @param string $url The URL to look up.
+	 * @return string|null The archived URL, or null if no snapshot exists.
+	 */
+	public static function wayback_lookup( $url ) {
+		$api_url  = add_query_arg( 'url', rawurlencode( $url ), self::WAYBACK_API );
+		$response = wp_remote_get(
+			$api_url,
+			array(
+				'timeout'    => 5,
+				'user-agent' => 'AnotherPanacea-MCP/' . APMCP_VERSION . ' WordPress/' . get_bloginfo( 'version' ),
+			)
+		);
+
+		if ( is_wp_error( $response ) ) {
+			return null;
+		}
+
+		if ( 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			return null;
+		}
+
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+		if (
+			! empty( $body['archived_snapshots']['closest']['available'] )
+			&& ! empty( $body['archived_snapshots']['closest']['url'] )
+		) {
+			return $body['archived_snapshots']['closest']['url'];
+		}
+
+		return null;
 	}
 }
