@@ -320,7 +320,7 @@ class APMCP_Audit_Post {
 				$archive_url = self::wayback_lookup( $dead_link['url'] );
 				if ( $archive_url ) {
 					$dead_link['archive_url'] = $archive_url;
-					$archive_found++;
+					++$archive_found;
 				} else {
 					$dead_link['archive_url'] = null;
 				}
@@ -328,7 +328,7 @@ class APMCP_Audit_Post {
 			unset( $dead_link );
 
 			if ( ! empty( $dead_links ) ) {
-				$fixable = $archive_found > 0;
+				$fixable  = $archive_found > 0;
 				$issues[] = array(
 					'type'         => 'dead_links',
 					'severity'     => 'high',
