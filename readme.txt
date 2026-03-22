@@ -75,7 +75,7 @@ The plugin checks GitHub releases for updates every 12 hours. Go to Dashboard > 
 
 * WordPress 6.9+ (for the Abilities API)
 * PHP 7.4+
-* A dedicated WordPress user for Claude (Editor role recommended)
+* A dedicated WordPress user for Claude (Editor role minimum; see below for theme management)
 
 = Quick Start =
 
@@ -88,6 +88,20 @@ The plugin checks GitHub releases for updates every 12 hours. Go to Dashboard > 
    * Enter a name (e.g. "Claude MCP") and click "Add New Application Password."
    * Copy the generated password. You will not see it again.
 4. Configure your MCP client to connect to the plugin.
+
+= Theme Management Setup =
+
+The 7 theme abilities (list-themes, get-theme-info, get-theme-file, create-theme, update-theme-file, delete-theme-file, activate-theme) let Claude read, create, and modify block themes — including template parts, patterns, styles, and theme.json design tokens.
+
+**Read-only** theme abilities (list/info/read) work with the standard Editor role.
+
+**Write** abilities (create/update/delete/activate) require `edit_themes` and `switch_themes` capabilities, which Editors don't have by default. To enable theme editing, create a custom "Theme Editor" role:
+
+1. Install a role management plugin (e.g. User Role Editor or Members).
+2. Create a new role called "Theme Editor" based on Editor, and add `edit_themes` and `switch_themes`.
+3. Assign your Claude user to the Theme Editor role.
+
+With the Theme Editor role, Claude can build and modify child themes, edit template parts (headers, footers, sidebars), create patterns, and update theme.json — all with path traversal protection and file extension validation. The plugin never escalates privileges on its own; the site admin decides whether to grant theme capabilities.
 
 = Claude Desktop Configuration =
 
@@ -148,7 +162,7 @@ WordPress 6.9 or later. The plugin uses the Abilities API (`wp_register_ability(
 
 = Is this safe to use? =
 
-The plugin is designed around a dedicated Editor-role user for Claude. Editors can manage content but cannot modify plugins, themes, users, or site settings. All changes are logged in an audit table. SSRF protections prevent the upload-media ability from accessing internal network resources.
+The plugin is designed around a dedicated low-privilege user for Claude. With the default Editor role, Claude can manage content but cannot modify plugins, users, or site settings. Theme editing requires explicitly granting `edit_themes` via a custom role — the plugin never escalates privileges on its own. All changes are logged in an audit table. SSRF protections prevent the upload-media ability from accessing internal network resources.
 
 = Does this work with WordPress.com? =
 
