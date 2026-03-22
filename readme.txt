@@ -4,7 +4,7 @@ Tags: mcp, ai, content-management, abilities-api, claude
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPL-2.0-or-later
 
 Give Claude full post lifecycle control over your self-hosted WordPress site via MCP.
