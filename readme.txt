@@ -4,14 +4,14 @@ Tags: mcp, ai, content-management, abilities-api, claude
 Requires at least: 6.9
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.5.6
+Stable tag: 1.6.1
 License: GPL-2.0-or-later
 
 Give Claude full post lifecycle control over your self-hosted WordPress site via MCP.
 
 == Description ==
 
-AnotherPanacea MCP gives Claude (via Claude Desktop, Claude Code, or any MCP client) full read/write control over a self-hosted WordPress site. It registers 28 abilities through the WordPress Abilities API (new in WP 6.9), covering the entire content lifecycle: search, create, edit, publish, schedule, trash, upload media, manage taxonomy, and handle comments.
+AnotherPanacea MCP gives Claude (via Claude Desktop, Claude Code, or any MCP client) full read/write control over a self-hosted WordPress site. It registers 35 abilities through the WordPress Abilities API (new in WP 6.9), covering the entire content lifecycle: search, create, edit, publish, schedule, trash, upload media, manage taxonomy, handle comments, and manage themes.
 
 Claude works in Markdown; WordPress stores Gutenberg blocks. The plugin converts between the two automatically.
 
@@ -19,7 +19,7 @@ Bundles [MCP Adapter](https://github.com/WordPress/mcp-adapter) v0.4.1, which tr
 
 = Abilities =
 
-**Read-only (9):**
+**Read-only (12):**
 
 * `search-posts` — Filter by status, text, category, tag, date range, post type
 * `get-post` — Full content as Markdown + raw block markup + preview URL
@@ -28,7 +28,10 @@ Bundles [MCP Adapter](https://github.com/WordPress/mcp-adapter) v0.4.1, which tr
 * `list-revisions` — Revision history with optional line-based diff
 * `search-media` — Search the media library
 * `search-comments` — Search and filter comments
-* `audit-post` — Scan for dead links, HTTP links, missing metadata, deprecated HTML, broken images
+* `audit-post` — Scan for dead links (with Wayback Machine lookup), HTTP links, missing metadata, deprecated HTML, broken images
+* `list-themes` — List installed themes with status and type (block/classic)
+* `get-theme-info` — Detailed theme metadata, theme.json contents, file tree
+* `get-theme-file` — Read any theme file (templates, parts, patterns, styles, assets)
 
 **Editorial (10):**
 
@@ -37,14 +40,18 @@ Bundles [MCP Adapter](https://github.com/WordPress/mcp-adapter) v0.4.1, which tr
 * `create-comment` / `update-comment` — Comment management
 * `manage-category` / `manage-tag` — Taxonomy CRUD
 * `upload-media` / `update-media` — Media management with SSRF protection
-* `repair-post` — Automated fixes: http-to-https, legacy HTML-to-blocks, excerpt generation, entity decoding
+* `repair-post` — Automated fixes: http-to-https, legacy HTML-to-blocks, excerpt generation, entity decoding, dead link replacement via Wayback Machine
 
-**Destructive (4):**
+**Destructive (8):**
 
 * `transition-status` — Change post status (draft, publish, schedule, private, trash)
 * `delete-post` — Permanent deletion
 * `delete-comment` — Comment deletion
 * `list-audit-log` — Query the audit trail
+* `create-theme` — Scaffold new block themes with starter templates and design tokens
+* `update-theme-file` — Write/update theme files with path traversal protection
+* `delete-theme-file` — Remove theme files (protects required files)
+* `activate-theme` — Switch active theme with dry-run support
 
 **Resources (3):** taxonomy-map, recent-drafts, site-info
 **Prompts (2):** draft-post, review-post
@@ -116,9 +123,9 @@ Create a `.mcp.json` in your project directory:
 
 For finer-grained access control, use one of the segmented endpoints instead:
 
-* `/wp-json/mcp/reader` — 9 read-only abilities + resources (requires `edit_posts`)
-* `/wp-json/mcp/editorial` — 19 read+write abilities + resources + prompts (requires `edit_posts`)
-* `/wp-json/mcp/full` — All 28 abilities + resources + prompts (requires `edit_others_posts`)
+* `/wp-json/mcp/reader` — 12 read-only abilities + resources (requires `edit_posts`)
+* `/wp-json/mcp/editorial` — 22 read+write abilities + resources + prompts (requires `edit_posts`)
+* `/wp-json/mcp/full` — All 35 abilities + resources + prompts (requires `edit_others_posts`)
 
 = Verify Installation =
 
@@ -152,6 +159,19 @@ No. This plugin requires a self-hosted WordPress installation (wp-admin access t
 Yes. Any MCP-compatible client can connect to the plugin's endpoints. The abilities are standard MCP tools.
 
 == Changelog ==
+
+= 1.6.1 =
+* Wayback Machine integration: audit-post reports archive.org availability for dead links.
+* repair-post: new replace-dead-links operation substitutes dead URLs with archive.org versions.
+* WPCS fixes: pre-increment and equals sign alignment.
+
+= 1.6.0 =
+* Theme management: 7 new abilities for full theme lifecycle.
+* list-themes, get-theme-info, get-theme-file (read-only, on reader surface).
+* create-theme: scaffold block themes with starter templates, parts, and theme.json design tokens.
+* update-theme-file, delete-theme-file, activate-theme (on full surface, requires edit_themes/switch_themes).
+* Child theme support in create-theme.
+* Server segmentation updated for theme abilities.
 
 = 1.5.6 =
 * Self-updater: lock down debug endpoint to update_plugins capability.

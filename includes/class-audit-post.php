@@ -70,7 +70,10 @@ class APMCP_Audit_Post {
 									'severity'     => array( 'type' => 'string' ),
 									'description'  => array( 'type' => 'string' ),
 									'auto_fixable' => array( 'type' => 'boolean' ),
-									'details'      => array( 'description' => 'Additional context.' ),
+									'details'      => array(
+										'type'        => 'object',
+										'description' => 'Additional context.',
+									),
 								),
 							),
 						),

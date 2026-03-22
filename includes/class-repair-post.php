@@ -89,7 +89,10 @@ class APMCP_Repair_Post {
 									'operation'   => array( 'type' => 'string' ),
 									'status'      => array( 'type' => 'string' ),
 									'description' => array( 'type' => 'string' ),
-									'changes'     => array( 'description' => 'Details of what changed.' ),
+									'changes'     => array(
+										'type'        => 'object',
+										'description' => 'Details of what changed.',
+									),
 								),
 							),
 						),

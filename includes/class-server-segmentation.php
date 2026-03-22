@@ -217,7 +217,10 @@ class APMCP_Server_Segmentation {
 						'type'       => 'object',
 						'properties' => array(
 							'success' => array( 'type' => 'boolean' ),
-							'data'    => array( 'description' => 'Result data from the ability.' ),
+							'data'    => array(
+								'type'        => 'object',
+								'description' => 'Result data from the ability.',
+							),
 							'error'   => array( 'type' => 'string' ),
 						),
 						'required'   => array( 'success' ),
